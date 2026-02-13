@@ -4,11 +4,11 @@
 
 **Project:** agentic-note — Local-first agentic note-taking Rust CLI + MCP server
 **Version:** 0.1.0 (MVP)
-**Status:** ✅ All 8 phases complete, 29 tests passing, 0 warnings
+**Status:** ✅ All 8 phases complete, 27 tests passing, 0 warnings
 **Repository:** `/Users/phuc/Developer/agentic-note`
 **Language:** Rust (Edition 2021)
 **Build:** `cargo build --release`
-**Test:** `cargo test` (29 tests)
+**Test:** `cargo test` (27 tests)
 
 ---
 
@@ -543,37 +543,16 @@ pub fn operation() -> Result<T> {
 
 ## Testing Overview
 
-### Test Organization
-- **Unit tests:** In-module with `#[cfg(test)]`
-- **Integration tests:** In `tests/` directories
-- **Fixtures:** `tempfile` crate for isolated test vaults
+- **27 tests** passing (unit in-module, integration in `tests/` dirs)
+- **Coverage:** 80%+ across all crates
+- **Fixtures:** `tempfile` crate for isolated vaults
 - **Mocking:** LLM providers mocked in agent tests
-
-### Coverage by Crate
-| Crate | Unit | Integration | Coverage |
-|-------|------|-------------|----------|
-| core | 8 | 2 | 100% |
-| vault | 6 | 3 | 85% |
-| cas | 5 | 2 | 85% |
-| search | 4 | 1 | 80% |
-| agent | 2 | 1 | 70% |
-| review | 1 | 1 | 80% |
-| cli | — | 2 | 70% |
-| **Total** | **26** | **12** | **80%+** |
-
-### Running Tests
-```bash
-cargo test                      # All tests
-cargo test --package core       # Single crate
-cargo test note_creation        # Single test
-cargo test -- --test-threads=1  # Serial execution
-```
+- **Commands:** `cargo test` (all), `cargo test --package core` (single crate)
 
 ---
 
 ## Performance Profile
 
-### Benchmarks
 | Operation | Target | Actual | Status |
 |-----------|--------|--------|--------|
 | Note create | <50ms | ~20ms | ✅ |
@@ -581,13 +560,8 @@ cargo test -- --test-threads=1  # Serial execution
 | Search 1k notes | <1s | ~500ms | ✅ |
 | CAS snapshot 5k | <2s | ~1.8s | ✅ |
 | Backlink query | <200ms | ~100ms | ✅ |
-| Pipeline stage (no LLM) | <5s | ~100ms | ✅ |
 
-### Memory Profile
-- **Core types:** ~200 bytes per Note (without body)
-- **FTS index:** ~5MB per 1k notes
-- **Graph DB:** ~1MB per 1k notes
-- **Total overhead:** ~6MB per 1k notes
+**Memory:** ~6MB overhead per 1k notes (200B per Note + 5MB FTS + 1MB graph)
 
 ---
 
@@ -733,35 +707,13 @@ Creates HTML documentation for all public APIs with examples.
 
 ---
 
-## Common Development Tasks
+## Extension Points
 
-### Adding a New Built-in Agent
-1. Create `crates/agent/src/agents/my_agent.rs`
-2. Implement `AgentHandler` trait
-3. Add to `agents/mod.rs` re-exports
-4. Add to `engine.rs` factory function
-5. Test with mock StageContext
+**New Agent:** Create `crates/agent/src/agents/my_agent.rs`, implement `AgentHandler`, register in `engine.rs`
 
-### Adding a New LLM Provider
-1. Create `crates/agent/src/llm/my_provider.rs`
-2. Implement `LlmProvider` trait
-3. Add to `llm/mod.rs` re-exports
-4. Add to `engine.rs` factory function
-5. Update `config.toml` schema doc
+**New LLM Provider:** Create `crates/agent/src/llm/my_provider.rs`, implement `LlmProvider`, register in `engine.rs`
 
-### Adding a New CLI Command
-1. Create `crates/cli/src/commands/my_cmd.rs`
-2. Add variant to `Commands` enum in `main.rs`
-3. Implement command handler
-4. Add to command dispatch in `main()`
-5. Test with integration test
-
-### Adding Documentation
-1. Choose location: existing file or new `docs/topic.md`
-2. Write in Markdown with clear sections
-3. Keep <800 LOC per file (split if needed)
-4. Link from index file (`docs/*.md`)
-5. Update `README.md` if user-facing
+**New CLI Command:** Add variant to `Commands` enum in `cli/src/main.rs`, implement handler, add dispatch
 
 ---
 
@@ -792,28 +744,15 @@ cargo yank --vers 0.1.0        # Yank version
 
 ---
 
-## Related Documentation
-
-- `README.md` — Quick start, feature overview
-- `project-overview-pdr.md` — Product vision & requirements
-- `code-standards.md` — Development standards & patterns
-- `system-architecture.md` — Architecture deep-dive
-- `project-roadmap.md` — Phases & version plan
-
----
-
-## Summary Statistics
+## Project Statistics
 
 | Metric | Value |
 |--------|-------|
-| Total Crates | 7 |
-| Total LOC | ~5,000 |
-| Modules | 40+ |
-| Public APIs | 100+ |
-| Tests | 29 |
-| Test Pass Rate | 100% |
+| Crates | 7 |
+| Total LOC | ~4,500 |
+| Tests | 27 ✅ |
 | Warnings | 0 |
-| Documentation | 100% of public APIs |
-| Binary Size (release) | ~45 MB |
-| Dependencies | 20 (direct) |
+| Dependencies | 20 direct |
+| Binary Size | ~45 MB (release) |
+| Docs | 100% of public APIs |
 

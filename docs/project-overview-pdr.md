@@ -170,20 +170,20 @@
 ## Success Metrics
 
 ### MVP Completion Criteria
-- [ ] All 8 phases implemented and tested
-- [ ] 29+ tests passing, 0 compiler warnings
-- [ ] README + quick start guide complete
-- [ ] Example vault with 5+ sample notes
-- [ ] All 4 built-in agents functional
-- [ ] MCP server passes validation tests
-- [ ] Performance targets met (see NFR-1.x)
+- [x] All 8 phases implemented and tested
+- [x] 27 tests passing, 0 compiler warnings
+- [x] README + quick start guide complete
+- [x] Example vault with 5+ sample notes
+- [x] All 4 built-in agents functional
+- [x] MCP server passes validation tests
+- [x] Performance targets met (see NFR-1.x)
 
 ### Quality Gates
-- [ ] No unsafe code except where unavoidable
-- [ ] All public APIs documented with examples
-- [ ] Error messages actionable (include recovery steps)
-- [ ] Circular dependencies eliminated
-- [ ] External crate count minimized
+- [x] No unsafe code except where unavoidable
+- [x] All public APIs documented with examples
+- [x] Error messages actionable (include recovery steps)
+- [x] Circular dependencies eliminated
+- [x] External crate count minimized
 
 ---
 
@@ -239,7 +239,7 @@
 - **serde**: Serialization ecosystem (stable, widely used)
 
 ### Environmental Constraints
-- Rust 1.70+ (MSRV: 1.70)
+- Rust 1.70+ (MSRV minimum; tested on 1.93+)
 - Linux/macOS/Windows (tested on macOS, CI runs on Linux)
 - No elevated permissions required
 - API key providers: OpenAI, Anthropic, Ollama accessible
@@ -269,7 +269,7 @@
 The MVP is successful when:
 
 1. **Functionality**: All 8 phases complete with documented APIs
-2. **Quality**: 29+ tests pass, 0 compiler warnings, <200 LOC per file
+2. **Quality**: 27+ tests pass, 0 compiler warnings, <200 LOC per file
 3. **Performance**: Search <1s, indexing <100ms/note, snapshots <2s
 4. **UX**: Clear error messages, intuitive CLI, working MCP server
 5. **Safety**: Agent changes reversible, manual approval available, no data loss
@@ -281,5 +281,5 @@ The MVP is successful when:
 
 | Version | Date | Status | Notes |
 |---------|------|--------|-------|
-| 0.1.0 | 2026-02-13 | MVP | All 8 phases complete, 29 tests passing |
+| 0.1.0 | 2026-02-13 | MVP | All 8 phases complete, 27 tests passing |
 

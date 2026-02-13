@@ -493,9 +493,9 @@ pub fn print_note(note: &Note, format: OutputFormat) -> Result<()> {
 - Use real temp files/databases
 - Test error recovery scenarios
 
-**Property-Based Tests (Future):**
-- Use proptest for value generation
-- Reserve for complex algorithms
+**Property-Based Tests (Future Enhancement):**
+- Consider for complex algorithms and edge cases
+- Examples: snapshot diffing, merge logic, graph cycles
 
 ### Mock & Fixture Strategy
 
@@ -662,11 +662,11 @@ Closes #42
 - **1.0.0**: Stable API, semantic versioning enforced
 
 ### Release Process
-1. Update version in `Cargo.toml` and `Cargo.lock`
-2. Update `CHANGELOG.md` with all changes
-3. Tag commit as `v0.1.0`
-4. Update `README.md` with new features
-5. Announce in release notes
+1. Update version in workspace `Cargo.toml`
+2. Run `cargo test && cargo clippy && cargo fmt`
+3. Tag commit as `v0.x.y`
+4. Update `README.md` and `project-roadmap.md`
+5. Create GitHub release with notes
 
 ---
 
