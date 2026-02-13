@@ -1,0 +1,28 @@
+name = "auto-process-inbox"
+description = "Automatically classify, link, distill, and file new inbox notes"
+enabled = true
+
+[trigger]
+trigger_type = "file_created"
+path_filter = "inbox/"
+debounce_ms = 500
+
+[[stages]]
+name = "classify"
+agent = "para-classifier"
+output = "classification"
+
+[[stages]]
+name = "link"
+agent = "zettelkasten-linker"
+output = "links"
+
+[[stages]]
+name = "distill"
+agent = "distiller"
+output = "distillation"
+
+[[stages]]
+name = "write"
+agent = "vault-writer"
+output = "changes"

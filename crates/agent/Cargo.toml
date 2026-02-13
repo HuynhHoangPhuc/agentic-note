@@ -1,0 +1,22 @@
+[package]
+name = "agentic-note-agent"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+agentic-note-core = { workspace = true }
+agentic-note-vault = { workspace = true }
+agentic-note-search = { workspace = true }
+agentic-note-review = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = "1"
+toml = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }
+reqwest = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["macros", "rt"] }
+chrono = { workspace = true }

@@ -1,0 +1,22 @@
+[package]
+name = "agentic-note-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "agentic-note"
+path = "src/main.rs"
+
+[dependencies]
+agentic-note-core = { workspace = true }
+agentic-note-vault = { workspace = true }
+agentic-note-search = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+walkdir = { workspace = true }
+regex = { workspace = true }
