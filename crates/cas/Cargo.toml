@@ -12,3 +12,4 @@ serde_yaml = { workspace = true }
 chrono = { workspace = true }
 walkdir = { workspace = true }
 tracing = { workspace = true }
+diffy = { workspace = true }

@@ -125,7 +125,7 @@ Note body in Markdown...
 
 ---
 
-#### 3. **cas** — Content-Addressable Storage
+#### 3. **cas** — Content-Addressable Storage (v0.3.0)
 **Purpose:** Provide versioning, snapshots, diffing, and conflict resolution through SHA-256 hashing.
 
 **Key Modules:**
@@ -135,6 +135,8 @@ Note body in Markdown...
 - `snapshot.rs` — `Snapshot`: represents vault state at a point in time
 - `diff.rs` — `diff_trees()`: compute changes between snapshots
 - `merge.rs` — `three_way_merge()`: resolve conflicts
+- `semantic_merge.rs` — (NEW) Paragraph-level diffy 3-way merge
+- `conflict_policy.rs` — ConflictPolicy enum with SemanticMerge variant (NEW)
 - `restore.rs` — `restore()`: revert vault to previous snapshot
 - `cas.rs` — `Cas` main interface: coordinate blob, tree, snapshot operations
 
@@ -166,7 +168,7 @@ impl Cas {
 
 ---
 
-#### 4. **search** — Full-Text & Semantic Search (v0.2.0)
+#### 4. **search** — Full-Text & Semantic Search (v0.3.0)
 **Purpose:** Index notes for FTS, semantic search, and maintain tag/link relationships in a graph database.
 
 **Key Modules:**
@@ -176,6 +178,7 @@ impl Cas {
 - `hybrid.rs` — (optional) Combined FTS + semantic scoring
 - `model_download.rs` — (optional) Auto-download all-MiniLM-L6-v2 ONNX model
 - `reindex.rs` — Incremental reindexing logic
+- `background_indexer.rs` — (NEW) FS watcher + async background indexing thread
 
 **Public API:**
 ```rust
@@ -219,7 +222,7 @@ impl SearchEngine {
 
 ---
 
-#### 5. **agent** — AgentSpace Engine, DAG Pipelines & LLM Integration
+#### 5. **agent** — AgentSpace Engine, DAG Pipelines & LLM Integration (v0.3.0)
 **Purpose:** Execute DAG pipelines with parallel stages, LLM-powered transformations, error recovery, and plugin system.
 
 **Key Modules:**
@@ -227,8 +230,11 @@ impl SearchEngine {
 - `engine/dag_executor.rs` — Topological sort + parallel execution
 - `engine/error_policy.rs` — Retry/skip/abort/fallback strategies
 - `engine/condition.rs` — Conditional stage execution
+- `engine/scheduler.rs` — (NEW) Cron and watch-based trigger scheduling
+- `engine/trigger.rs` — (NEW) TriggerType enum (Cron/Watch)
 - `llm/` — Provider implementations (OpenAI, Anthropic, Ollama)
-- `agents/` — 4 built-in agents (para-classifier, zettelkasten-linker, distiller, vault-writer)
+- `agents/` — Built-in agents (para-classifier, zettelkasten-linker, distiller, vault-writer, merge-assistant)
+- `agents/merge_assistant.rs` — (NEW) LLM-assisted merge conflict resolution
 - `plugin/` — Plugin discovery, manifest, and subprocess execution
 
 **Core Types (v2.0 Pipeline Schema):**
@@ -347,7 +353,7 @@ impl ReviewQueue {
 
 ---
 
-#### 7. **sync** — P2P Sync via iroh (NEW)
+#### 7. **sync** — P2P Sync via iroh (v0.3.0)
 **Purpose:** Peer-to-peer vault synchronization with device identity, conflict resolution, and merge orchestration.
 
 **Key Modules:**
@@ -357,6 +363,8 @@ impl ReviewQueue {
 - `iroh_transport.rs` — QUIC-based iroh binding (endpoint + node)
 - `protocol.rs` — Sync request/response messages
 - `merge_driver.rs` — CAS-aware three-way merge orchestration
+- `compression.rs` — (NEW) zstd compression/decompression for sync payloads
+- `batch_sync.rs` — (NEW) Multi-peer batch sync with vector clocks
 
 **Core Types:**
 ```rust
@@ -412,12 +420,15 @@ Peer A                         Peer B
 
 ---
 
-#### 8. **cli** — Command-Line Interface & MCP Server
+#### 8. **cli** — Command-Line Interface & MCP Server (v0.3.0)
 **Purpose:** User-facing CLI commands and MCP server for AI assistant integration.
 
 **Key Modules:**
 - `main.rs` — Entry point, clap CLI parsing
-- `commands/` — Command implementations (init, note, config, agent, device, sync, plugin, mcp)
+- `commands/` — Command implementations (init, note, config, agent, device, sync, plugin, metrics, pipeline, mcp)
+- `commands/metrics_cmd.rs` — (NEW) Metrics display and reset
+- `commands/pipeline.rs` — (NEW) Pipeline status and scheduling
+- `metrics_init.rs` — (NEW) Metrics recorder initialization
 - `mcp/` — MCP JSON-RPC server implementation
 - `output.rs` — JSON/human output formatting
 
@@ -430,18 +441,24 @@ agentic-note note list [--para <PARA>] [--tags <TAGS>]
 agentic-note note search <QUERY> [--mode hybrid]
 agentic-note note read <NOTE_ID>
 
-# Device & Sync (NEW)
+# Device & Sync
 agentic-note device init               # Generate Ed25519 identity
 agentic-note device show               # Display peer ID
 agentic-note device pair <PEER_ID> [--name "Device Name"]
 agentic-note device list               # Show known devices
 agentic-note device unpair <PEER_ID>   # Remove peer
 agentic-note sync now [--peer <PEER_ID>] [--policy newest-wins]
+agentic-note sync now --all            # Batch sync all peers (NEW v0.3.0)
 agentic-note sync status               # Check sync state
 
-# Plugins (NEW)
+# Plugins
 agentic-note plugin list               # Show installed plugins
 agentic-note plugin run <PLUGIN> [--config <TOML>]
+
+# Scheduling & Metrics (NEW v0.3.0)
+agentic-note pipeline status           # Show scheduled pipelines
+agentic-note metrics show              # Display collected metrics
+agentic-note metrics reset             # Clear metrics
 
 # Configuration
 agentic-note config show               # Display config
@@ -708,23 +725,23 @@ AgenticError (from core)
 
 ---
 
-## Known Limitations (v0.2.0)
+## Known Limitations (v0.3.0)
 
-- **Sequential conflict resolution** — Manual merge only (auto-policies upcoming)
-- **Single vault per sync session** — Multi-vault sync deferred to v0.3
-- **No compression** — iroh transfer uncompressed
+- **Plugin security** — No sandboxing (trust plugin authors, v0.4 will add WebAssembly)
 - **Embeddings optional** — Not all deployments need semantic search
-- **Plugin security** — No sandboxing (trust plugin authors)
 - **No partial snapshots** — Restore entire vault or nothing
+- **Multi-vault sync** — Single vault per session (future enhancement)
+- **Prometheus integration** — Metrics stubs only (v0.4 for full export)
+- **PostgreSQL backend** — Planned for v0.4 (for 10k+ note deployments)
 
 ---
 
-## Future Architecture Improvements (v0.3+)
+## Future Architecture Improvements (v0.4+)
 
-1. **Batch sync** — Multi-peer simultaneous sync
-2. **Compression** — Delta-based iroh sync
-3. **Auto-merge policies** — Semantic-aware conflict resolution
-4. **Plugin sandboxing** — WebAssembly or lightweight container isolation
-5. **PostgreSQL optional** — For large deployments (10k+ notes)
-6. **Event bus** — Publish/subscribe for pipeline coordination and webhooks
+1. **Plugin sandboxing** — WebAssembly or lightweight container isolation
+2. **PostgreSQL optional** — For large deployments (10k+ notes)
+3. **Prometheus integration** — Full metrics export (v0.3 has stubs)
+4. **Event bus** — Publish/subscribe for pipeline coordination and webhooks
+5. **End-to-end encryption** — Optional E2EE for sync transfers
+6. **Multi-device presence** — Real-time peer discovery and status
 

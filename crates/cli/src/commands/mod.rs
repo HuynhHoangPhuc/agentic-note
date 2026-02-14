@@ -2,7 +2,9 @@ pub mod config;
 pub mod device;
 pub mod init;
 pub mod mcp_cmd;
+pub mod metrics_cmd;
 pub mod note;
+pub mod pipeline;
 pub mod plugin;
 pub mod sync_cmd;
 
@@ -11,6 +13,7 @@ use std::path::PathBuf;
 
 pub use device::DeviceCmd;
 pub use mcp_cmd::McpCmd;
+pub use pipeline::PipelineCmd;
 pub use sync_cmd::SyncCmd;
 
 #[derive(Subcommand)]
@@ -50,6 +53,16 @@ pub enum Commands {
         #[command(subcommand)]
         cmd: SyncCmd,
     },
+    /// Metrics and observability
+    Metrics {
+        #[command(subcommand)]
+        cmd: MetricsCmd,
+    },
+    /// Pipeline scheduling and management
+    Pipeline {
+        #[command(subcommand)]
+        cmd: PipelineCmd,
+    },
 }
 
 #[derive(Subcommand)]
@@ -62,4 +75,10 @@ pub enum ConfigCmd {
 pub enum PluginCmd {
     /// List discovered plugins
     List,
+}
+
+#[derive(Subcommand)]
+pub enum MetricsCmd {
+    /// Show current metrics summary table
+    Show,
 }

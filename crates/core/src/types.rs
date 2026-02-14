@@ -83,6 +83,8 @@ pub enum ConflictPolicy {
     NewestWins,
     LongestWins,
     MergeBoth,
+    /// Tiered merge: diffy paragraph-level 3-way diff, then LLM-assisted, then manual fallback.
+    SemanticMerge,
     #[default]
     Manual,
 }

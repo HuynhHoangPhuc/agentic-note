@@ -19,6 +19,12 @@ pub struct AppConfig {
     pub embeddings: EmbeddingsConfig,
     #[serde(default)]
     pub plugins: PluginsConfig,
+    #[serde(default)]
+    pub scheduler: SchedulerConfig,
+    #[serde(default)]
+    pub metrics: MetricsConfig,
+    #[serde(default)]
+    pub indexer: IndexerConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,7 +102,7 @@ impl Default for AgentConfig {
 }
 
 /// Sync configuration for P2P device synchronization.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncConfig {
     #[serde(default)]
     pub default_conflict_policy: ConflictPolicy,
@@ -104,6 +110,32 @@ pub struct SyncConfig {
     pub conflict_overrides: HashMap<String, ConflictPolicy>,
     #[serde(default)]
     pub device_name: Option<String>,
+    /// Enable zstd compression for sync blob transfer.
+    #[serde(default = "default_true")]
+    pub compression_enabled: bool,
+    /// zstd compression level 1-22.
+    #[serde(default = "default_compression_level")]
+    pub compression_level: i32,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_compression_level() -> i32 {
+    3
+}
+
+impl Default for SyncConfig {
+    fn default() -> Self {
+        Self {
+            default_conflict_policy: ConflictPolicy::default(),
+            conflict_overrides: HashMap::new(),
+            device_name: None,
+            compression_enabled: true,
+            compression_level: 3,
+        }
+    }
 }
 
 /// Embeddings configuration for semantic search.
@@ -156,6 +188,90 @@ impl Default for PluginsConfig {
             enabled: false,
             plugins_dir: default_plugins_dir(),
             default_timeout_secs: default_timeout_secs(),
+        }
+    }
+}
+
+/// Pipeline scheduler configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SchedulerConfig {
+    /// Enable the pipeline scheduler.
+    #[serde(default)]
+    pub enabled: bool,
+    /// Default cron expression for scheduled pipelines.
+    #[serde(default)]
+    pub default_cron: Option<String>,
+    /// FS watch debounce in milliseconds.
+    #[serde(default = "default_watch_debounce_ms")]
+    pub watch_debounce_ms: u64,
+}
+
+fn default_watch_debounce_ms() -> u64 {
+    500
+}
+
+impl Default for SchedulerConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            default_cron: None,
+            watch_debounce_ms: 500,
+        }
+    }
+}
+
+/// Metrics and observability configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MetricsConfig {
+    /// Enable metrics collection.
+    #[serde(default)]
+    pub enabled: bool,
+    /// Prometheus exporter port (localhost only).
+    #[serde(default = "default_prometheus_port")]
+    pub prometheus_port: u16,
+}
+
+fn default_prometheus_port() -> u16 {
+    9091
+}
+
+impl Default for MetricsConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            prometheus_port: 9091,
+        }
+    }
+}
+
+/// Background indexer configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IndexerConfig {
+    /// Enable background indexing on file changes.
+    #[serde(default = "default_true")]
+    pub background: bool,
+    /// Debounce window in milliseconds before indexing.
+    #[serde(default = "default_indexer_debounce_ms")]
+    pub debounce_ms: u64,
+    /// Max files per index batch.
+    #[serde(default = "default_batch_size")]
+    pub batch_size: usize,
+}
+
+fn default_indexer_debounce_ms() -> u64 {
+    200
+}
+
+fn default_batch_size() -> usize {
+    50
+}
+
+impl Default for IndexerConfig {
+    fn default() -> Self {
+        Self {
+            background: true,
+            debounce_ms: 200,
+            batch_size: 50,
         }
     }
 }
@@ -215,5 +331,50 @@ max_concurrent_pipelines = 2
         assert_eq!(config.llm.default_provider, "anthropic");
         assert_eq!(config.agent.max_concurrent_pipelines, 2);
         assert_eq!(config.agent.default_trust, TrustLevel::Review);
+        // v0.3 defaults applied when sections are absent
+        assert!(config.indexer.background);
+        assert_eq!(config.indexer.debounce_ms, 200);
+        assert_eq!(config.indexer.batch_size, 50);
+        assert!(!config.scheduler.enabled);
+        assert_eq!(config.scheduler.watch_debounce_ms, 500);
+        assert!(!config.metrics.enabled);
+        assert_eq!(config.metrics.prometheus_port, 9091);
+        assert!(config.sync.compression_enabled);
+        assert_eq!(config.sync.compression_level, 3);
+    }
+
+    #[test]
+    fn test_deserialize_config_with_v030_sections() {
+        let toml_str = r#"
+[vault]
+path = "/home/user/notes"
+
+[scheduler]
+enabled = true
+watch_debounce_ms = 1000
+
+[metrics]
+enabled = true
+prometheus_port = 8080
+
+[indexer]
+background = false
+debounce_ms = 500
+batch_size = 100
+
+[sync]
+compression_enabled = false
+compression_level = 6
+"#;
+        let config: AppConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.scheduler.enabled);
+        assert_eq!(config.scheduler.watch_debounce_ms, 1000);
+        assert!(config.metrics.enabled);
+        assert_eq!(config.metrics.prometheus_port, 8080);
+        assert!(!config.indexer.background);
+        assert_eq!(config.indexer.debounce_ms, 500);
+        assert_eq!(config.indexer.batch_size, 100);
+        assert!(!config.sync.compression_enabled);
+        assert_eq!(config.sync.compression_level, 6);
     }
 }

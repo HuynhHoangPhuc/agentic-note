@@ -5,6 +5,7 @@ pub mod diff;
 pub mod hash;
 pub mod merge;
 pub mod restore;
+pub mod semantic_merge;
 pub mod snapshot;
 pub mod tree;
 
@@ -15,5 +16,6 @@ pub use diff::{diff_trees, DiffEntry, DiffStatus};
 pub use hash::{hash_bytes, hash_file, ObjectId};
 pub use merge::{three_way_merge, ConflictInfo, MergeResult};
 pub use restore::restore;
+pub use semantic_merge::{try_paragraph_merge, ConflictHunk, MergeAttempt};
 pub use snapshot::Snapshot;
 pub use tree::{EntryType, Tree, TreeEntry};

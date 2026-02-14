@@ -24,6 +24,7 @@ impl Note {
         body: &str,
         tags: Vec<String>,
     ) -> Result<Note> {
+        metrics::counter!("note_operations_total", "operation" => "create").increment(1);
         let id = agentic_note_core::next_id();
         let now = Utc::now();
         let fm = FrontMatter {
@@ -55,6 +56,7 @@ impl Note {
 
     /// Read a note from a file path.
     pub fn read(path: &Path) -> Result<Note> {
+        metrics::counter!("note_operations_total", "operation" => "read").increment(1);
         let raw = std::fs::read_to_string(path)
             .map_err(|e| AgenticError::NotFound(format!("{}: {e}", path.display())))?;
         let (fm, body) = frontmatter::parse(&raw)?;
@@ -68,6 +70,7 @@ impl Note {
 
     /// Update an existing note: bumps modified timestamp and rewrites file.
     pub fn update(&mut self) -> Result<()> {
+        metrics::counter!("note_operations_total", "operation" => "update").increment(1);
         self.frontmatter.modified = Utc::now();
         let content = frontmatter::serialize(&self.frontmatter, &self.body)?;
         std::fs::write(&self.path, &content)?;
@@ -76,6 +79,7 @@ impl Note {
 
     /// Delete a note file.
     pub fn delete(path: &Path) -> Result<()> {
+        metrics::counter!("note_operations_total", "operation" => "delete").increment(1);
         if !path.exists() {
             return Err(AgenticError::NotFound(format!("{}", path.display())));
         }

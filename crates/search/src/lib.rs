@@ -1,6 +1,9 @@
+pub mod background_indexer;
 pub mod fts;
 pub mod graph;
 pub mod reindex;
+
+pub use background_indexer::{BackgroundIndexer, IndexTask};
 
 #[cfg(feature = "embeddings")]
 pub mod embedding;

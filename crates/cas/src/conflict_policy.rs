@@ -44,6 +44,9 @@ pub fn resolve_conflict(
         ConflictPolicy::LongestWins => longest_wins(store, info),
         ConflictPolicy::MergeBoth => merge_both(store, info),
         ConflictPolicy::Manual => Ok(ConflictResolution::Unresolved(info.clone())),
+        // SemanticMerge: handled by semantic_merge module; fall back to unresolved here
+        // so the caller (merge_driver) can invoke async LLM merge separately.
+        ConflictPolicy::SemanticMerge => Ok(ConflictResolution::Unresolved(info.clone())),
     }
 }
 

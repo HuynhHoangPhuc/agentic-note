@@ -1,9 +1,11 @@
 pub mod distiller;
+pub mod merge_assistant;
 pub mod para_classifier;
 pub mod vault_writer;
 pub mod zettelkasten_linker;
 
 pub use distiller::Distiller;
+pub use merge_assistant::MergeAssistant;
 pub use para_classifier::ParaClassifier;
 pub use vault_writer::VaultWriter;
 pub use zettelkasten_linker::ZettelkastenLinker;
@@ -28,6 +30,7 @@ pub fn register_builtin_agents(
     space.register_agent(Arc::new(Distiller::new(Arc::clone(&llm))));
     space.register_agent(Arc::new(ZettelkastenLinker::new(Arc::clone(&llm), search)));
     space.register_agent(Arc::new(VaultWriter::new()));
+    space.register_agent(Arc::new(MergeAssistant::new(Arc::clone(&llm))));
 }
 
 /// Discover and register plugin agents from the plugins directory.

@@ -199,6 +199,8 @@ mod tests {
                 trigger_type: TriggerType::Manual,
                 path_filter: None,
                 debounce_ms: 0,
+                cron: None,
+                watch_path: None,
             },
             stages,
             default_on_error: Default::default(),

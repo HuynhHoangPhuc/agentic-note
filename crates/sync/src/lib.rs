@@ -1,4 +1,6 @@
 /// Sync crate: P2P sync via iroh, device identity, and merge orchestration.
+pub mod batch_sync;
+pub mod compression;
 pub mod device_registry;
 pub mod identity;
 pub mod iroh_transport;
@@ -6,6 +8,7 @@ pub mod merge_driver;
 pub mod protocol;
 pub mod transport;
 
+pub use batch_sync::{BatchSyncResult, PeerSyncOutcome, PeerSyncStatus};
 pub use device_registry::{DeviceRegistry, KnownDevice};
 pub use identity::DeviceIdentity;
 pub use iroh_transport::IrohTransport;

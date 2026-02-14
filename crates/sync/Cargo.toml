@@ -16,6 +16,8 @@ ed25519-dalek = { workspace = true }
 rand = { workspace = true }
 iroh = { workspace = true }
 dirs = { workspace = true }
+zstd = { workspace = true }
+metrics = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

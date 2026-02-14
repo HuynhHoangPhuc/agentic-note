@@ -13,6 +13,12 @@ pub struct TriggerConfig {
     pub path_filter: Option<String>,
     #[serde(default = "default_debounce")]
     pub debounce_ms: u64,
+    /// Cron expression for scheduled triggers (e.g. "*/5 * * * *")
+    #[serde(default)]
+    pub cron: Option<String>,
+    /// Directory to watch for file changes (relative to vault)
+    #[serde(default)]
+    pub watch_path: Option<String>,
 }
 
 /// The event kinds that can trigger a pipeline.
@@ -22,6 +28,10 @@ pub enum TriggerType {
     FileCreated,
     FileModified,
     Manual,
+    /// Time-based trigger using a cron expression.
+    Cron,
+    /// File-watch trigger that fires on any change under a directory.
+    Watch,
 }
 
 /// A file system event produced by a watcher (or test harness).
@@ -46,11 +56,15 @@ impl TriggerConfig {
     /// otherwise the filter must be a literal prefix of the event path
     /// string.
     pub fn matches(&self, event: &FileEvent) -> bool {
-        // Manual triggers are never fired by file events.
+        // Manual and Cron triggers are never fired by file events.
+        // Watch matches both Created and Modified events.
         let type_match = match (&self.trigger_type, &event.event_type) {
             (TriggerType::FileCreated, FileEventType::Created) => true,
             (TriggerType::FileModified, FileEventType::Modified) => true,
+            (TriggerType::Watch, FileEventType::Created) => true,
+            (TriggerType::Watch, FileEventType::Modified) => true,
             (TriggerType::Manual, _) => false,
+            (TriggerType::Cron, _) => false,
             _ => false,
         };
 
@@ -89,6 +103,8 @@ mod tests {
             trigger_type: t,
             path_filter: filter.map(str::to_string),
             debounce_ms: 500,
+            cron: None,
+            watch_path: None,
         }
     }
 

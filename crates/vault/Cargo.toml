@@ -16,3 +16,4 @@ walkdir = { workspace = true }
 regex = { workspace = true }
 tracing = { workspace = true }
 toml = { workspace = true }
+metrics = { workspace = true }

@@ -1,12 +1,13 @@
 mod commands;
 mod mcp;
+mod metrics_init;
 mod output;
 
 use clap::Parser;
 use std::path::PathBuf;
 use tracing_subscriber::EnvFilter;
 
-use commands::{Commands, ConfigCmd, McpCmd, PluginCmd};
+use commands::{Commands, ConfigCmd, McpCmd, MetricsCmd, PluginCmd};
 use mcp::McpServer;
 use output::OutputFormat;
 
@@ -79,6 +80,12 @@ async fn main() {
         },
 
         Commands::Sync { cmd } => commands::sync_cmd::run(cmd, &vault_path, fmt).await,
+
+        Commands::Metrics { cmd } => match cmd {
+            MetricsCmd::Show => commands::metrics_cmd::show_metrics(),
+        },
+
+        Commands::Pipeline { cmd } => commands::pipeline::run(cmd, &vault_path, fmt),
     };
 
     if let Err(e) = result {

@@ -3,13 +3,13 @@
 ## Quick Reference
 
 **Project:** agentic-note — Local-first agentic note-taking Rust CLI + MCP server
-**Version:** 0.2.0 (Sync & Plugins)
-**Status:** ✅ All 8 crates complete, DAG pipelines, P2P sync, plugin system, embeddings
+**Version:** 0.3.0 (Performance & Scaling)
+**Status:** ✅ All 8 crates complete, DAG pipelines, P2P sync, plugin system, embeddings, background indexing, compression, batch sync, semantic merge, scheduling, metrics
 **Repository:** `/Users/phuc/Developer/agentic-note`
 **Language:** Rust (Edition 2021)
 **Build:** `cargo build --release`
-**Test:** `cargo test` (tests passing, 0 warnings)
-**Total LOC:** ~8,500 Rust code
+**Test:** `cargo test` (35+ tests passing, 0 warnings)
+**Total LOC:** ~9,500 Rust code
 
 ---
 
@@ -46,20 +46,23 @@ agentic-note/
 │   │       ├── merge.rs          # three_way_merge() (conflict resolution)
 │   │       └── cas.rs            # Cas facade
 │   │
-│   ├── search/                   # FTS (tantivy) + semantic (ONNX) + graph
+│   ├── search/                   # FTS (tantivy) + semantic (ONNX) + graph + background indexing
 │   │   └── src/
 │   │       ├── fts.rs            # FtsIndex (tantivy)
-│   │       ├── embedding.rs      # EmbeddingIndex (ONNX) [NEW]
-│   │       ├── hybrid.rs         # Hybrid search [NEW]
+│   │       ├── embedding.rs      # EmbeddingIndex (ONNX)
+│   │       ├── hybrid.rs         # Hybrid search
 │   │       ├── graph.rs          # Graph (SQLite tag/link)
-│   │       └── model_download.rs # Model caching [NEW]
+│   │       ├── model_download.rs # Model caching
+│   │       └── background_indexer.rs # FS watcher + async indexing [NEW v0.3.0]
 │   │
-│   ├── agent/                    # DAG pipelines, plugins, LLM providers [v0.2.0]
+│   ├── agent/                    # DAG pipelines, plugins, LLM providers, scheduling [v0.3.0]
 │   │   └── src/
 │   │       ├── engine/
-│   │       │   ├── dag_executor.rs      # Topological sort + parallel [NEW]
-│   │       │   ├── error_policy.rs      # Retry/skip/abort/fallback [NEW]
-│   │       │   ├── condition.rs         # Conditional execution [NEW]
+│   │       │   ├── dag_executor.rs      # Topological sort + parallel
+│   │       │   ├── error_policy.rs      # Retry/skip/abort/fallback
+│   │       │   ├── condition.rs         # Conditional execution
+│   │       │   ├── scheduler.rs         # Cron/watch trigger scheduling [NEW v0.3.0]
+│   │       │   ├── trigger.rs           # TriggerType enum [NEW v0.3.0]
 │   │       │   └── pipeline.rs          # v2 schema with depends_on
 │   │       ├── plugin/                  # Plugin system [NEW]
 │   │       │   ├── manifest.rs          # plugin.toml parsing
@@ -71,36 +74,42 @@ agentic-note/
 │   │       │   └── ollama.rs            # Ollama (local)
 │   │       └── agents/                  # Built-in agents
 │   │           ├── para_classifier.rs   # Suggest PARA category
-│   │           ├── zettelkasten_linker.rs
+│   │           ├── zettelkasten_linker.rs # Extract atomic concepts
 │   │           ├── distiller.rs         # Summarize notes
-│   │           └── vault_writer.rs      # Create synthesis notes
+│   │           ├── vault_writer.rs      # Create synthesis notes
+│   │           └── merge_assistant.rs   # LLM merge conflict resolution [NEW v0.3.0]
 │   │
 │   ├── review/                   # Review queue, approval gate
 │   │   └── src/
 │   │       ├── queue.rs          # ReviewQueue, ReviewItem (SQLite)
 │   │       └── gate.rs           # Approval logic
 │   │
-│   ├── sync/                     # P2P sync via iroh [NEW crate]
+│   ├── sync/                     # P2P sync via iroh [v0.3.0]
 │   │   └── src/
 │   │       ├── identity.rs       # Ed25519 device identity
 │   │       ├── device_registry.rs # Known devices (JSON/TOML)
 │   │       ├── iroh_transport.rs  # QUIC-based iroh endpoint
 │   │       ├── transport.rs       # Abstract sync trait
 │   │       ├── protocol.rs        # Sync messages
-│   │       └── merge_driver.rs    # Merge orchestration
+│   │       ├── merge_driver.rs    # Merge orchestration
+│   │       ├── compression.rs     # zstd encode/decode [NEW v0.3.0]
+│   │       └── batch_sync.rs      # Multi-peer batch sync [NEW v0.3.0]
 │   │
 │   └── cli/                      # CLI + MCP server
 │       └── src/
 │           ├── main.rs           # Entry point, clap parsing
-│           ├── commands/         # Command implementations (v0.2.0)
+│           ├── commands/         # Command implementations (v0.3.0)
 │           │   ├── init.rs       # vault init
 │           │   ├── note.rs       # note create/read/list/search
 │           │   ├── config.rs     # config show
 │           │   ├── agent.rs      # agent run
-│           │   ├── device.rs     # device init/show/pair [NEW]
-│           │   ├── sync_cmd.rs   # sync now/status [NEW]
-│           │   ├── plugin.rs     # plugin list/run [NEW]
+│           │   ├── device.rs     # device init/show/pair
+│           │   ├── sync_cmd.rs   # sync now/status
+│           │   ├── plugin.rs     # plugin list/run
+│           │   ├── metrics_cmd.rs # metrics show/reset [NEW v0.3.0]
+│           │   ├── pipeline.rs   # pipeline status [NEW v0.3.0]
 │           │   └── mcp_cmd.rs    # mcp serve
+│           ├── metrics_init.rs   # Metrics recorder stub [NEW v0.3.0]
 │           ├── mcp/              # MCP JSON-RPC server
 │           │   ├── server.rs     # stdin/stdout handling
 │           │   ├── handlers.rs   # Tool implementations
@@ -192,8 +201,8 @@ Note body content here...
 ---
 
 ### crates/cas
-**Lines of Code:** ~800 LOC
-**Dependencies:** core, vault, sha2, serde_json
+**Lines of Code:** ~950 LOC (v0.3.0: added semantic merge)
+**Dependencies:** core, vault, sha2, serde_json, diffy
 **Main Types:**
 - `ObjectId` — SHA-256 hash (String alias)
 - `Blob` — Content with hash
@@ -202,6 +211,8 @@ Note body content here...
 - `Snapshot` — Immutable vault state
 - `DiffEntry` — Single change
 - `MergeResult` — Conflict resolution outcome
+- `SemanticMerge` — Paragraph-level diffy merge result (NEW v0.3.0)
+- `ConflictPolicy` — NewestWins, LongestWins, MergeBoth, Manual, SemanticMerge (NEW v0.3.0)
 
 **Key Functions:**
 ```rust
@@ -232,13 +243,14 @@ Cas::three_way_merge(base, mine, theirs) → Result<MergeResult>  // Merge
 ---
 
 ### crates/search
-**Lines of Code:** ~600 LOC
-**Dependencies:** core, vault, tantivy, rusqlite
+**Lines of Code:** ~750 LOC (added background indexer)
+**Dependencies:** core, vault, tantivy, rusqlite, notify
 **Main Types:**
 - `FtsIndex` — tantivy wrapper
 - `Graph` — SQLite backlink/tag index
 - `SearchResult` — Query result
 - `SearchEngine` — Facade combining FTS + graph
+- `BackgroundIndexer` — FS watcher + async indexing thread (NEW v0.3.0)
 
 **Key Functions:**
 ```rust
@@ -266,14 +278,16 @@ SearchEngine::get_orphaned_notes() → Result<Vec<NoteId>>  // Orphaned notes
 ---
 
 ### crates/agent
-**Lines of Code:** ~1500 LOC (v0.2.0)
-**Dependencies:** core, vault, search, review, tokio, reqwest, petgraph, ort
+**Lines of Code:** ~1800 LOC (v0.3.0: added scheduler, merge assistant)
+**Dependencies:** core, vault, search, review, tokio, reqwest, petgraph, ort, cron
 **Main Types:**
 - `PipelineConfig` — TOML-loaded pipeline (schema v1 or v2)
 - `StageConfig` — Single stage with depends_on, condition, error policy
 - `StageContext` — Input/output for agent execution
 - `ErrorPolicy` — Skip, Retry, Abort, Fallback
 - `DagExecutor` — Topological sort + parallel execution
+- `Scheduler` — Cron + watch-based pipeline triggering (NEW v0.3.0)
+- `TriggerType` — Cron, Watch, Manual (NEW v0.3.0)
 
 **Key Components:**
 ```rust
@@ -303,6 +317,7 @@ pub struct DagExecutor {
 | zettelkasten-linker | `agents/zettelkasten_linker.rs` | Extract atomic concepts |
 | distiller | `agents/distiller.rs` | Summarize notes |
 | vault-writer | `agents/vault_writer.rs` | Create synthesis notes |
+| merge-assistant | `agents/merge_assistant.rs` | LLM conflict resolution (NEW v0.3.0) |
 
 **Plugin System (NEW):**
 - Manifest-driven: `plugin.toml` declares name, version, executable, timeout
@@ -377,8 +392,8 @@ gate(item, trust_level, queue) → Result<GateResult>       // Approval logic
 ---
 
 ### crates/sync
-**Lines of Code:** ~700 LOC (NEW in v0.2.0)
-**Dependencies:** core, cas, tokio, iroh, ed25519-dalek, chrono, serde
+**Lines of Code:** ~1000 LOC (v0.3.0: added compression, batch sync)
+**Dependencies:** core, cas, tokio, iroh, ed25519-dalek, chrono, serde, zstd
 **Main Types:**
 - `DeviceIdentity` — Ed25519 keypair + peer ID
 - `DeviceRegistry` — Known devices with metadata
@@ -386,6 +401,8 @@ gate(item, trust_level, queue) → Result<GateResult>       // Approval logic
 - `SyncTransport` — Abstract trait for custom transports
 - `IrohTransport` — QUIC-based iroh implementation
 - `ConflictPolicy` — NewestWins, LongestWins, MergeBoth, Manual
+- `MultiPeerSync` — Batch sync with multiple peers (NEW v0.3.0)
+- `VectorClock` — Causality tracking for multi-peer sync (NEW v0.3.0)
 
 **Core Functions:**
 ```rust
@@ -432,11 +449,11 @@ sync.sync_with_peer(peer_id, conflict_policy) → Result<MergeOutcome>
 ---
 
 ### crates/cli
-**Lines of Code:** ~1200 LOC (v0.2.0)
+**Lines of Code:** ~1400 LOC (v0.3.0: added metrics, pipeline commands)
 **Dependencies:** core, vault, search, cas, agent, review, sync, clap, tokio, tracing
 **Entry Point:** `src/main.rs`
 
-**Command Structure (v0.2.0):**
+**Command Structure (v0.3.0):**
 ```
 agentic-note [OPTIONS] <COMMAND>
 
@@ -457,26 +474,32 @@ Commands (v0.2.0):
 
 **Subcommands:**
 ```
-# Note operations (unchanged)
+# Note operations
 note create --title <TITLE> [--body <BODY>] [--para <PARA>] [--tags <TAGS>]
 note read <NOTE_ID>
 note list [--para <PARA>] [--tags <TAGS>] [--status <STATUS>]
-note search <QUERY> [--mode fts|semantic|hybrid]  # mode param NEW
+note search <QUERY> [--mode fts|semantic|hybrid]
 note delete <NOTE_ID>
 
-# Device & sync (NEW in v0.2.0)
+# Device & sync
 device init                           # Generate Ed25519 keypair
 device show                           # Display peer ID
 device pair <PEER_ID> [--name "Name"]
 device list                           # Show known devices
 device unpair <PEER_ID>
 
-sync now [--peer <PEER_ID>] [--policy newest-wins|longest-wins|merge-both|manual]
+sync now [--peer <PEER_ID>] [--policy policy]
+sync now --all                        # Batch sync all peers (NEW v0.3.0)
 sync status                           # Check sync state
 
-# Plugins (NEW in v0.2.0)
+# Plugins
 plugin list                           # Show installed plugins
 plugin run <PLUGIN> [--config <TOML>]
+
+# Scheduling & Metrics (NEW v0.3.0)
+pipeline status                       # Show scheduled pipelines
+metrics show                          # Display collected metrics
+metrics reset                         # Clear metrics
 
 # Configuration
 config show
@@ -844,17 +867,17 @@ cargo yank --vers 0.1.0        # Yank version
 
 ---
 
-## Project Statistics (v0.2.0)
+## Project Statistics (v0.3.0)
 
 | Metric | Value |
 |--------|-------|
-| Crates | 8 (added sync) |
-| Total LOC | ~8,500 |
-| Core LOC | ~6,000 |
-| Tests | 30+ ✅ |
+| Crates | 8 |
+| Total LOC | ~9,500 |
+| Core LOC | ~6,500 |
+| Tests | 35+ ✅ |
 | Compiler Warnings | 0 |
-| Dependencies | 25 direct (added petgraph, ort, iroh) |
-| New Features | DAG pipelines, P2P sync, embeddings, plugins |
-| Binary Size | ~55 MB (release) |
+| Dependencies | 27 direct (added notify, diffy, zstd, cron) |
+| New Features | Background indexing, compression, batch sync, semantic merge, scheduling, metrics |
+| Binary Size | ~60 MB (release) |
 | Docs | 100% of public APIs |
 

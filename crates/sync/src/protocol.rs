@@ -7,6 +7,7 @@ use std::path::Path;
 use agentic_note_cas::{Cas, Snapshot};
 use agentic_note_core::error::{AgenticError, Result};
 use agentic_note_core::types::ConflictPolicy;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
 use crate::merge_driver::merge_after_sync;
@@ -23,6 +24,46 @@ pub struct SyncResult {
     pub conflicts: usize,
     /// ID of the post-sync snapshot.
     pub snapshot_id: String,
+}
+
+/// Payload format for blob transfer during sync.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SyncPayload {
+    /// Uncompressed blob data.
+    FullBlob { hash: String, data: Vec<u8> },
+    /// Zstd-compressed blob data.
+    CompressedBlob { hash: String, compressed_data: Vec<u8> },
+}
+
+impl SyncPayload {
+    /// Create a payload from blob data, optionally compressing.
+    pub fn from_blob(hash: String, data: Vec<u8>, compress: bool, level: i32) -> Result<Self> {
+        if compress {
+            let compressed_data = crate::compression::compress(&data, level)?;
+            Ok(Self::CompressedBlob { hash, compressed_data })
+        } else {
+            Ok(Self::FullBlob { hash, data })
+        }
+    }
+
+    /// Extract the hash from the payload.
+    pub fn hash(&self) -> &str {
+        match self {
+            Self::FullBlob { hash, .. } => hash,
+            Self::CompressedBlob { hash, .. } => hash,
+        }
+    }
+
+    /// Decompress and return the blob data.
+    pub fn into_data(self) -> Result<(String, Vec<u8>)> {
+        match self {
+            Self::FullBlob { hash, data } => Ok((hash, data)),
+            Self::CompressedBlob { hash, compressed_data } => {
+                let data = crate::compression::decompress(&compressed_data)?;
+                Ok((hash, data))
+            }
+        }
+    }
 }
 
 /// Run the full sync protocol as the initiator (Device A).

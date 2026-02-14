@@ -34,6 +34,15 @@ pub enum AgenticError {
 
     #[error("Pipeline error: {0}")]
     Pipeline(String),
+
+    #[error("Metrics error: {0}")]
+    Metrics(String),
+
+    #[error("Scheduler error: {0}")]
+    Scheduler(String),
+
+    #[error("Indexer error: {0}")]
+    Indexer(String),
 }
 
 pub type Result<T> = std::result::Result<T, AgenticError>;

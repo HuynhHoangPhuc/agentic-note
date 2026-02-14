@@ -5,6 +5,7 @@ pub mod error_policy;
 pub mod executor;
 pub mod migration;
 pub mod pipeline;
+pub mod scheduler;
 pub mod trigger;
 
 pub use context::StageContext;
@@ -12,6 +13,7 @@ pub use dag_executor::DagExecutor;
 pub use error_policy::StageError;
 pub use executor::{AgentHandler, PipelineResult, StageExecutor};
 pub use pipeline::PipelineConfig;
+pub use scheduler::{PipelineScheduler, ScheduleInfo};
 pub use trigger::{FileEvent, FileEventType, TriggerConfig, TriggerType};
 
 use agentic_note_core::error::{AgenticError, Result};
