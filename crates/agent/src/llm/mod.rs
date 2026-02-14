@@ -1,4 +1,6 @@
 pub mod anthropic;
+pub mod batch_collector;
+pub mod cache;
 pub mod openai;
 
 use agentic_note_core::error::{AgenticError, Result};
@@ -44,6 +46,17 @@ pub struct ChatOpts {
 pub trait LlmProvider: Send + Sync {
     fn name(&self) -> &str;
     async fn chat(&self, messages: &[Message], opts: &ChatOpts) -> Result<String>;
+
+    /// Execute multiple requests, returning one response per input in order.
+    /// Default implementation runs them sequentially; backends may override
+    /// with concurrent execution.
+    async fn batch_chat(&self, requests: &[(Vec<Message>, ChatOpts)]) -> Result<Vec<String>> {
+        let mut results = Vec::with_capacity(requests.len());
+        for (msgs, opts) in requests {
+            results.push(self.chat(msgs, opts).await?);
+        }
+        Ok(results)
+    }
 }
 
 /// Registry of named providers with an active default.

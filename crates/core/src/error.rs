@@ -43,6 +43,18 @@ pub enum AgenticError {
 
     #[error("Indexer error: {0}")]
     Indexer(String),
+
+    #[error("Database error: {0}")]
+    Database(String),
+
+    #[error("Encryption error: {0}")]
+    Encryption(String),
+
+    #[error("Wasm error: {0}")]
+    Wasm(String),
+
+    #[error("MultiVault error: {0}")]
+    MultiVault(String),
 }
 
 pub type Result<T> = std::result::Result<T, AgenticError>;

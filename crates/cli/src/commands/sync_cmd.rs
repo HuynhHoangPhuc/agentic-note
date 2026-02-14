@@ -1,8 +1,8 @@
-/// Sync CLI commands: now, status.
+/// Sync CLI commands: now, status, all-vaults.
 ///
 /// Named sync_cmd.rs to avoid collision with Rust's `sync` built-in module.
 use agentic_note_core::types::ConflictPolicy;
-use agentic_note_sync::{DeviceRegistry, SyncEngine};
+use agentic_note_sync::{DeviceRegistry, SyncEngine, VaultRegistry};
 use clap::Subcommand;
 use std::path::Path;
 
@@ -24,6 +24,8 @@ pub enum SyncCmd {
     },
     /// Show sync status (last sync times, pending conflicts)
     Status,
+    /// Sync all vaults registered in the vault registry
+    AllVaults,
 }
 
 pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::Result<()> {
@@ -215,6 +217,33 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
                             println!("  .agentic/conflicts/{f}");
                         }
                         println!("Resolve conflicts then delete the .conflict files.");
+                    }
+                }
+            }
+        }
+
+        SyncCmd::AllVaults => {
+            let registry = VaultRegistry::load()?;
+            let results = agentic_note_sync::sync_all_vaults(&registry).await?;
+
+            match fmt {
+                OutputFormat::Json => {
+                    let entries: Vec<_> = results
+                        .iter()
+                        .map(|(name, status)| {
+                            serde_json::json!({ "vault": name, "status": status })
+                        })
+                        .collect();
+                    print_json(&serde_json::json!({ "vault_sync_results": entries }));
+                }
+                OutputFormat::Human => {
+                    if results.is_empty() {
+                        println!("No sync-enabled vaults registered.");
+                    } else {
+                        println!("Multi-vault sync complete ({} vaults):", results.len());
+                        for (name, status) in &results {
+                            println!("  {name}: {status}");
+                        }
                     }
                 }
             }

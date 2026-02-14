@@ -55,6 +55,16 @@ impl DeviceIdentity {
         })
     }
 
+    /// Derive X25519 public key from the Ed25519 signing key.
+    ///
+    /// The X25519 secret is deterministically derived from the Ed25519 key via SHA-512,
+    /// so this public key is stable across restarts and can be shared with peers.
+    pub fn x25519_public_key(&self) -> [u8; 32] {
+        let secret = crate::encryption::derive_x25519_secret(&self.secret_key.to_bytes());
+        let public = x25519_dalek::PublicKey::from(&secret);
+        public.to_bytes()
+    }
+
     /// Save secret key to file with restrictive permissions.
     pub fn save(&self, path: &Path) -> Result<()> {
         std::fs::write(path, self.secret_key.to_bytes())

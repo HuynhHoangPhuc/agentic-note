@@ -2,19 +2,23 @@
 pub mod batch_sync;
 pub mod compression;
 pub mod device_registry;
+pub mod encryption;
 pub mod identity;
 pub mod iroh_transport;
 pub mod merge_driver;
 pub mod protocol;
 pub mod transport;
+pub mod vault_registry;
 
 pub use batch_sync::{BatchSyncResult, PeerSyncOutcome, PeerSyncStatus};
 pub use device_registry::{DeviceRegistry, KnownDevice};
+pub use encryption::EncryptedPayload;
 pub use identity::DeviceIdentity;
 pub use iroh_transport::IrohTransport;
 pub use merge_driver::MergeOutcome;
 pub use protocol::SyncResult;
 pub use transport::{SyncConnection, SyncMessage, SyncTransport};
+pub use vault_registry::VaultRegistry;
 
 use std::path::{Path, PathBuf};
 
@@ -119,5 +123,62 @@ impl SyncEngine {
         self.registry
             .save()
             .map_err(|e| AgenticError::Sync(format!("save registry after pairing: {e}")))
+    }
+}
+
+/// Sync all sync-enabled vaults in the registry.
+///
+/// For each vault, creates a `SyncEngine` and syncs with all of its `default_peers`
+/// sequentially. Per-vault errors are captured rather than aborting the whole run.
+///
+/// Returns a vec of `(vault_name, status_message)` for every vault processed.
+pub async fn sync_all_vaults(
+    registry: &VaultRegistry,
+) -> Result<Vec<(String, String)>> {
+    let enabled = registry.sync_enabled();
+    let mut results: Vec<(String, String)> = Vec::with_capacity(enabled.len());
+
+    for entry in enabled {
+        let status = sync_single_vault_entry(entry).await;
+        results.push((entry.name.clone(), status));
+    }
+
+    Ok(results)
+}
+
+/// Internal helper: sync one vault entry, returning a human-readable status string.
+async fn sync_single_vault_entry(
+    entry: &agentic_note_core::config::VaultEntry,
+) -> String {
+    use agentic_note_core::types::ConflictPolicy;
+
+    if entry.default_peers.is_empty() {
+        return "skipped: no default peers configured".into();
+    }
+
+    let mut engine = match SyncEngine::new_with_iroh(&entry.path).await {
+        Ok(e) => e,
+        Err(err) => return format!("error: init engine: {err}"),
+    };
+
+    let policy = ConflictPolicy::default();
+    let mut synced = 0usize;
+    let mut errors: Vec<String> = vec![];
+
+    for peer in &entry.default_peers {
+        match engine.sync_with_peer(peer, &policy).await {
+            Ok(r) => synced += r.merged,
+            Err(e) => errors.push(format!("{peer}: {e}")),
+        }
+    }
+
+    if errors.is_empty() {
+        format!("ok: synced {synced} notes across {} peers", entry.default_peers.len())
+    } else {
+        format!(
+            "partial: {synced} notes synced, {} errors: {}",
+            errors.len(),
+            errors.join("; ")
+        )
     }
 }

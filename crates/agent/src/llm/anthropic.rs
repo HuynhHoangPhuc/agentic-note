@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use serde_json::{json, Value};
 
 use super::{ChatOpts, LlmProvider, Message};
+use std::sync::Arc;
 
 /// Anthropic Claude provider.
 pub struct AnthropicProvider {
@@ -91,5 +92,29 @@ impl LlmProvider for AnthropicProvider {
             .as_str()
             .map(|s| s.to_string())
             .ok_or_else(|| AgenticError::Parse("anthropic: missing content[0].text".into()))
+    }
+
+    /// Concurrent batch execution using `futures::join_all`.
+    async fn batch_chat(&self, requests: &[(Vec<Message>, ChatOpts)]) -> Result<Vec<String>> {
+        let provider = Arc::new(Self {
+            api_key: self.api_key.clone(),
+            default_model: self.default_model.clone(),
+            client: self.client.clone(),
+        });
+
+        let futs: Vec<_> = requests
+            .iter()
+            .map(|(msgs, opts)| {
+                let p = Arc::clone(&provider);
+                let msgs = msgs.clone();
+                let opts = opts.clone();
+                async move { p.chat(&msgs, &opts).await }
+            })
+            .collect();
+
+        futures::future::join_all(futs)
+            .await
+            .into_iter()
+            .collect::<Result<Vec<_>>>()
     }
 }

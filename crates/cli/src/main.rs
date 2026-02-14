@@ -1,5 +1,6 @@
 mod commands;
 mod mcp;
+pub mod metrics_handle;
 mod metrics_init;
 mod output;
 
@@ -86,6 +87,10 @@ async fn main() {
         },
 
         Commands::Pipeline { cmd } => commands::pipeline::run(cmd, &vault_path, fmt),
+
+        Commands::VaultRegistry { cmd } => {
+            commands::vault_registry_cmd::run(cmd, fmt)
+        }
     };
 
     if let Err(e) = result {

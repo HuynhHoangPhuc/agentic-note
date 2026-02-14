@@ -7,6 +7,7 @@ pub mod note;
 pub mod pipeline;
 pub mod plugin;
 pub mod sync_cmd;
+pub mod vault_registry_cmd;
 
 use clap::Subcommand;
 use std::path::PathBuf;
@@ -62,6 +63,11 @@ pub enum Commands {
     Pipeline {
         #[command(subcommand)]
         cmd: PipelineCmd,
+    },
+    /// Vault registry operations (multi-vault management)
+    VaultRegistry {
+        #[command(subcommand)]
+        cmd: vault_registry_cmd::VaultRegistryCmd,
     },
 }
 

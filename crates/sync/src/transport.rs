@@ -11,6 +11,16 @@ pub enum SyncMessage {
     BlobBatch { blobs: Vec<(String, Vec<u8>)> },
     SyncComplete { snapshot_id: String },
     Error { message: String },
+    /// An encrypted note blob sent from one peer to another.
+    /// `sender_pubkey` is the sender's X25519 public key (32 bytes).
+    EncryptedNote {
+        sender_pubkey: [u8; 32],
+        payload: crate::encryption::EncryptedPayload,
+    },
+    /// Advertise X25519 encryption capability during handshake.
+    EncryptionSupported {
+        x25519_pubkey: [u8; 32],
+    },
 }
 
 /// Transport abstraction — thin adapter to isolate iroh API.

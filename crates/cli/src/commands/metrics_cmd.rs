@@ -1,27 +1,37 @@
 //! CLI command for displaying metrics summary.
 //!
-//! Provides a simple formatted table showing current metric values.
-//! Reads from the metrics registry when available.
+//! When a MetricsHandle is available, encodes real Prometheus metrics.
+//! Otherwise displays a hint about enabling the metrics server.
+
+use crate::metrics_handle::MetricsHandle;
 
 /// Display current metrics as a formatted CLI table.
 pub fn show_metrics() -> anyhow::Result<()> {
     println!("Metrics Summary");
     println!("{}", "=".repeat(50));
     println!();
-    println!("Note: Metrics are collected in-memory during this session.");
-    println!("Use --metrics flag to enable Prometheus exporter on port 9091.");
-    println!();
-    println!("  Counters and histograms are recorded via the `metrics` facade.");
-    println!("  Install a prometheus exporter (--features prometheus) to scrape them.");
+    println!("Note: Enable metrics server with [metrics] enabled = true in config.");
+    println!("Then scrape http://127.0.0.1:9091/metrics for Prometheus format.");
     println!();
     println!("{}", "-".repeat(50));
-    println!("  note_operations_total          (counter)");
-    println!("  pipeline_execution_duration_s  (histogram)");
-    println!("  pipeline_stage_duration_s      (histogram)");
-    println!("  sync_duration_seconds          (histogram)");
-    println!("  sync_bytes_transferred         (counter)");
-    println!("  indexer_batch_duration_s        (histogram)");
-    println!("  indexer_files_processed_total   (counter)");
+    println!("  pipeline_execution_duration_seconds (histogram)");
+    println!("  search_query_duration_seconds       (histogram)");
+    println!("  sync_duration_seconds               (histogram)");
+    println!("  notes_total                         (gauge)");
+    println!("  llm_requests_total                  (counter)");
+    println!("  llm_cache_hits_total                (counter)");
+    println!("  review_queue_pending                (gauge)");
     println!("{}", "-".repeat(50));
+    Ok(())
+}
+
+/// Display metrics from a live MetricsHandle (OpenMetrics text format).
+pub fn show_metrics_live(handle: &MetricsHandle) -> anyhow::Result<()> {
+    let text = handle.encode();
+    if text.trim().is_empty() {
+        println!("No metrics recorded yet.");
+    } else {
+        println!("{text}");
+    }
     Ok(())
 }

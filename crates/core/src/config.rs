@@ -25,6 +25,10 @@ pub struct AppConfig {
     pub metrics: MetricsConfig,
     #[serde(default)]
     pub indexer: IndexerConfig,
+    #[serde(default)]
+    pub database: DatabaseConfig,
+    #[serde(default)]
+    pub llm_cache: LlmCacheConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,6 +120,9 @@ pub struct SyncConfig {
     /// zstd compression level 1-22.
     #[serde(default = "default_compression_level")]
     pub compression_level: i32,
+    /// End-to-end encryption settings.
+    #[serde(default)]
+    pub encryption: EncryptionConfig,
 }
 
 fn default_true() -> bool {
@@ -134,6 +141,7 @@ impl Default for SyncConfig {
             device_name: None,
             compression_enabled: true,
             compression_level: 3,
+            encryption: EncryptionConfig::default(),
         }
     }
 }
@@ -172,6 +180,9 @@ pub struct PluginsConfig {
     pub plugins_dir: PathBuf,
     #[serde(default = "default_timeout_secs")]
     pub default_timeout_secs: u64,
+    /// WASM runtime configuration.
+    #[serde(default)]
+    pub wasm: WasmConfig,
 }
 
 fn default_plugins_dir() -> PathBuf {
@@ -188,6 +199,7 @@ impl Default for PluginsConfig {
             enabled: false,
             plugins_dir: default_plugins_dir(),
             default_timeout_secs: default_timeout_secs(),
+            wasm: WasmConfig::default(),
         }
     }
 }
@@ -272,6 +284,133 @@ impl Default for IndexerConfig {
             background: true,
             debounce_ms: 200,
             batch_size: 50,
+        }
+    }
+}
+
+/// Database backend configuration (SQLite default, Postgres optional).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseConfig {
+    /// Backend type: "sqlite" or "postgres".
+    #[serde(default = "default_backend")]
+    pub backend: String,
+    /// Connection URL for Postgres (ignored for SQLite).
+    #[serde(default)]
+    pub url: Option<String>,
+    /// Connection pool size (Postgres only).
+    #[serde(default = "default_max_connections")]
+    pub max_connections: u32,
+}
+
+fn default_backend() -> String {
+    "sqlite".into()
+}
+
+fn default_max_connections() -> u32 {
+    5
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            backend: default_backend(),
+            url: None,
+            max_connections: 5,
+        }
+    }
+}
+
+/// LLM response cache configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LlmCacheConfig {
+    /// Enable LLM response caching.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Cache TTL in seconds (default 24h).
+    #[serde(default = "default_cache_ttl")]
+    pub ttl_secs: u64,
+    /// Max cache entries before pruning.
+    #[serde(default = "default_max_cache_entries")]
+    pub max_entries: usize,
+}
+
+fn default_cache_ttl() -> u64 {
+    86400
+}
+
+fn default_max_cache_entries() -> usize {
+    10000
+}
+
+impl Default for LlmCacheConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            ttl_secs: 86400,
+            max_entries: 10000,
+        }
+    }
+}
+
+/// Encryption configuration for P2P sync.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EncryptionConfig {
+    /// Enable end-to-end encryption for sync.
+    #[serde(default)]
+    pub enabled: bool,
+    /// Reject unencrypted peers when true.
+    #[serde(default)]
+    pub require_encryption: bool,
+}
+
+impl Default for EncryptionConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            require_encryption: false,
+        }
+    }
+}
+
+/// A registered vault entry for multi-vault sync.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VaultEntry {
+    pub path: PathBuf,
+    pub name: String,
+    #[serde(default = "default_true")]
+    pub sync_enabled: bool,
+    #[serde(default)]
+    pub default_peers: Vec<String>,
+}
+
+/// WASM plugin runtime configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WasmConfig {
+    /// Default memory limit in MB per plugin.
+    #[serde(default = "default_wasm_memory_limit")]
+    pub default_memory_limit_mb: u32,
+    /// Default fuel limit per plugin execution.
+    #[serde(default = "default_fuel_limit")]
+    pub default_fuel_limit: u64,
+    /// Cache compiled WASM modules.
+    #[serde(default = "default_true")]
+    pub cache_compiled: bool,
+}
+
+fn default_wasm_memory_limit() -> u32 {
+    64
+}
+
+fn default_fuel_limit() -> u64 {
+    1_000_000
+}
+
+impl Default for WasmConfig {
+    fn default() -> Self {
+        Self {
+            default_memory_limit_mb: 64,
+            default_fuel_limit: 1_000_000,
+            cache_compiled: true,
         }
     }
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Agentic-note is a modular, local-first Rust application designed as a Cargo workspace with 8 specialized crates. Each crate has a single responsibility and communicates through well-defined interfaces. This document describes the architecture, crate relationships, and data flow for v0.2.0 and beyond.
+Agentic-note is a modular, local-first Rust application designed as a Cargo workspace with 8 specialized crates. Each crate has a single responsibility and communicates through well-defined interfaces. This document describes the architecture, crate relationships, and data flow for v0.4.0 and beyond.
 
 ---
 
