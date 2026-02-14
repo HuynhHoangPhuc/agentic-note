@@ -148,8 +148,7 @@ impl ReviewQueue {
 
 fn row_to_item(row: &rusqlite::Row<'_>) -> rusqlite::Result<ReviewItem> {
     let changes_str: String = row.get(3)?;
-    let proposed_changes: Value =
-        serde_json::from_str(&changes_str).unwrap_or(Value::Null);
+    let proposed_changes: Value = serde_json::from_str(&changes_str).unwrap_or(Value::Null);
     Ok(ReviewItem {
         id: row.get(0)?,
         pipeline: row.get(1)?,
@@ -207,9 +206,7 @@ mod tests {
     #[test]
     fn reject_sets_status_and_double_reject_errors() {
         let (q, _f) = open_temp_queue();
-        let id = q
-            .enqueue("classify", "note-03", json!({}))
-            .unwrap();
+        let id = q.enqueue("classify", "note-03", json!({})).unwrap();
         q.reject(&id).unwrap();
 
         let item = q.get(&id).unwrap();

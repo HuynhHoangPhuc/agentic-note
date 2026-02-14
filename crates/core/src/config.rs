@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::error::{AgenticError, Result};
+use crate::types::{ConflictPolicy, ErrorPolicy};
 
 /// Top-level application configuration from `.agentic/config.toml`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,6 +13,12 @@ pub struct AppConfig {
     pub llm: LlmConfig,
     #[serde(default)]
     pub agent: AgentConfig,
+    #[serde(default)]
+    pub sync: SyncConfig,
+    #[serde(default)]
+    pub embeddings: EmbeddingsConfig,
+    #[serde(default)]
+    pub plugins: PluginsConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,16 +63,12 @@ pub struct ProviderConfig {
 /// Trust level for agent actions.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum TrustLevel {
     Manual,
+    #[default]
     Review,
     Auto,
-}
-
-impl Default for TrustLevel {
-    fn default() -> Self {
-        Self::Review
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,6 +77,8 @@ pub struct AgentConfig {
     pub default_trust: TrustLevel,
     #[serde(default = "default_max_pipelines")]
     pub max_concurrent_pipelines: usize,
+    #[serde(default)]
+    pub default_on_error: ErrorPolicy,
 }
 
 fn default_max_pipelines() -> usize {
@@ -85,6 +90,72 @@ impl Default for AgentConfig {
         Self {
             default_trust: TrustLevel::default(),
             max_concurrent_pipelines: default_max_pipelines(),
+            default_on_error: ErrorPolicy::default(),
+        }
+    }
+}
+
+/// Sync configuration for P2P device synchronization.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SyncConfig {
+    #[serde(default)]
+    pub default_conflict_policy: ConflictPolicy,
+    #[serde(default)]
+    pub conflict_overrides: HashMap<String, ConflictPolicy>,
+    #[serde(default)]
+    pub device_name: Option<String>,
+}
+
+/// Embeddings configuration for semantic search.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EmbeddingsConfig {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_model_name")]
+    pub model_name: String,
+    #[serde(default)]
+    pub cache_dir: Option<PathBuf>,
+}
+
+fn default_model_name() -> String {
+    "all-MiniLM-L6-v2".into()
+}
+
+impl Default for EmbeddingsConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            model_name: default_model_name(),
+            cache_dir: None,
+        }
+    }
+}
+
+/// Plugins configuration for custom agent plugins.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginsConfig {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_plugins_dir")]
+    pub plugins_dir: PathBuf,
+    #[serde(default = "default_timeout_secs")]
+    pub default_timeout_secs: u64,
+}
+
+fn default_plugins_dir() -> PathBuf {
+    PathBuf::from(".agentic/plugins")
+}
+
+fn default_timeout_secs() -> u64 {
+    30
+}
+
+impl Default for PluginsConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            plugins_dir: default_plugins_dir(),
+            default_timeout_secs: default_timeout_secs(),
         }
     }
 }

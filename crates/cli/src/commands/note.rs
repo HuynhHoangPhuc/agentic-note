@@ -62,7 +62,12 @@ pub enum NoteCmd {
 
 pub fn run(cmd: NoteCmd, vault_path: &PathBuf, fmt: OutputFormat) -> anyhow::Result<()> {
     match cmd {
-        NoteCmd::Create { title, para, tags, body } => {
+        NoteCmd::Create {
+            title,
+            para,
+            tags,
+            body,
+        } => {
             let para = parse_para(&para)?;
             let note = Note::create(vault_path, &title, para, &body, tags)?;
             match fmt {
@@ -82,14 +87,31 @@ pub fn run(cmd: NoteCmd, vault_path: &PathBuf, fmt: OutputFormat) -> anyhow::Res
             let note = Note::read(&path)?;
             print_note(&note, fmt);
         }
-        NoteCmd::Update { id, title, tags, para, body, status } => {
+        NoteCmd::Update {
+            id,
+            title,
+            tags,
+            para,
+            body,
+            status,
+        } => {
             let path = resolve_note_path(vault_path, &id)?;
             let mut note = Note::read(&path)?;
-            if let Some(t) = title { note.frontmatter.title = t; }
-            if let Some(t) = tags { note.frontmatter.tags = t; }
-            if let Some(p) = para { note.frontmatter.para = parse_para(&p)?; }
-            if let Some(b) = body { note.body = b; }
-            if let Some(s) = status { note.frontmatter.status = parse_status(&s)?; }
+            if let Some(t) = title {
+                note.frontmatter.title = t;
+            }
+            if let Some(t) = tags {
+                note.frontmatter.tags = t;
+            }
+            if let Some(p) = para {
+                note.frontmatter.para = parse_para(&p)?;
+            }
+            if let Some(b) = body {
+                note.body = b;
+            }
+            if let Some(s) = status {
+                note.frontmatter.status = parse_status(&s)?;
+            }
             note.update()?;
             match fmt {
                 OutputFormat::Json => print_json(&serde_json::json!({
@@ -111,7 +133,12 @@ pub fn run(cmd: NoteCmd, vault_path: &PathBuf, fmt: OutputFormat) -> anyhow::Res
                 OutputFormat::Human => println!("Deleted: {}", path.display()),
             }
         }
-        NoteCmd::List { para, tag, status, limit } => {
+        NoteCmd::List {
+            para,
+            tag,
+            status,
+            limit,
+        } => {
             let vault = Vault::open(vault_path)?;
             let filter = NoteFilter {
                 para: para.as_deref().and_then(|p| parse_para(p).ok()),

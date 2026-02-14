@@ -10,7 +10,9 @@ pub use zettelkasten_linker::ZettelkastenLinker;
 
 use crate::engine::AgentSpace;
 use crate::llm::LlmProvider;
+use crate::plugin::{discover_plugins, PluginAgent};
 use agentic_note_search::SearchEngine;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 /// Register all built-in agent handlers into the given `AgentSpace`.
@@ -26,4 +28,18 @@ pub fn register_builtin_agents(
     space.register_agent(Arc::new(Distiller::new(Arc::clone(&llm))));
     space.register_agent(Arc::new(ZettelkastenLinker::new(Arc::clone(&llm), search)));
     space.register_agent(Arc::new(VaultWriter::new()));
+}
+
+/// Discover and register plugin agents from the plugins directory.
+/// Returns the number of plugins registered.
+pub fn register_plugins(
+    space: &mut AgentSpace,
+    plugins_dir: &Path,
+) -> agentic_note_core::Result<usize> {
+    let plugins = discover_plugins(plugins_dir)?;
+    let count = plugins.len();
+    for (manifest, dir) in plugins {
+        space.register_agent(Arc::new(PluginAgent::new(manifest, dir)));
+    }
+    Ok(count)
 }

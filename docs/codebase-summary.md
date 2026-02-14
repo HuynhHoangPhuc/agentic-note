@@ -3,12 +3,13 @@
 ## Quick Reference
 
 **Project:** agentic-note — Local-first agentic note-taking Rust CLI + MCP server
-**Version:** 0.1.0 (MVP)
-**Status:** ✅ All 8 phases complete, 27 tests passing, 0 warnings
+**Version:** 0.2.0 (Sync & Plugins)
+**Status:** ✅ All 8 crates complete, DAG pipelines, P2P sync, plugin system, embeddings
 **Repository:** `/Users/phuc/Developer/agentic-note`
 **Language:** Rust (Edition 2021)
 **Build:** `cargo build --release`
-**Test:** `cargo test` (27 tests)
+**Test:** `cargo test` (tests passing, 0 warnings)
+**Total LOC:** ~8,500 Rust code
 
 ---
 
@@ -16,107 +17,109 @@
 
 ```
 agentic-note/
-├── Cargo.toml                    # Workspace manifest (7 crates)
+├── Cargo.toml                    # Workspace manifest (8 crates)
 ├── Cargo.lock                    # Locked dependencies
 ├── README.md                     # Quick start guide
 ├── .gitignore                    # Git exclude patterns
 │
-├── crates/                       # Rust workspace crates
-│   ├── core/                     # Shared types, errors, config
-│   │   ├── Cargo.toml
+├── crates/                       # Rust workspace crates (8 total)
+│   ├── core/                     # Shared types, errors, config (v0.2.0)
 │   │   └── src/
-│   │       ├── lib.rs            # Re-exports
-│   │       ├── types.rs          # NoteId, ParaCategory, NoteStatus, FrontMatter
-│   │       ├── error.rs          # AgenticError enum
-│   │       ├── config.rs         # AppConfig (TOML loading)
-│   │       └── id.rs             # ULID-based ID generation
+│   │       ├── types.rs          # NoteId, ErrorPolicy, ConflictPolicy (NEW)
+│   │       ├── error.rs          # AgenticError (+ Sync variant)
+│   │       └── config.rs         # AppConfig (TOML loading)
 │   │
 │   ├── vault/                    # Note CRUD, PARA folders, frontmatter
-│   │   ├── Cargo.toml
 │   │   └── src/
-│   │       ├── lib.rs            # Vault struct, re-exports
 │   │       ├── note.rs           # Note struct (create/read/update/delete)
 │   │       ├── frontmatter.rs    # YAML parsing/serialization
 │   │       ├── para.rs           # PARA folder structure
-│   │       ├── markdown.rs       # Link extraction
-│   │       └── init.rs           # Vault initialization
+│   │       └── markdown.rs       # Link extraction
 │   │
 │   ├── cas/                      # Content-addressable storage
-│   │   ├── Cargo.toml
 │   │   └── src/
-│   │       ├── lib.rs            # Re-exports
 │   │       ├── hash.rs           # SHA-256 hashing (ObjectId)
 │   │       ├── blob.rs           # BlobStore (file content)
 │   │       ├── tree.rs           # Tree (vault snapshot structure)
 │   │       ├── snapshot.rs       # Snapshot (immutable vault state)
 │   │       ├── diff.rs           # diff_trees() (compute changes)
 │   │       ├── merge.rs          # three_way_merge() (conflict resolution)
-│   │       ├── restore.rs        # restore() (revert to snapshot)
-│   │       └── cas.rs            # Cas facade (coordinates operations)
+│   │       └── cas.rs            # Cas facade
 │   │
-│   ├── search/                   # FTS (tantivy) + graph (SQLite)
-│   │   ├── Cargo.toml
+│   ├── search/                   # FTS (tantivy) + semantic (ONNX) + graph
 │   │   └── src/
-│   │       ├── lib.rs            # SearchEngine facade, re-exports
-│   │       ├── fts.rs            # FtsIndex (tantivy integration)
-│   │       ├── graph.rs          # Graph (SQLite tag/link index)
-│   │       └── reindex.rs        # Reindexing logic
+│   │       ├── fts.rs            # FtsIndex (tantivy)
+│   │       ├── embedding.rs      # EmbeddingIndex (ONNX) [NEW]
+│   │       ├── hybrid.rs         # Hybrid search [NEW]
+│   │       ├── graph.rs          # Graph (SQLite tag/link)
+│   │       └── model_download.rs # Model caching [NEW]
 │   │
-│   ├── agent/                    # AgentSpace engine, LLM providers, agents
-│   │   ├── Cargo.toml
+│   ├── agent/                    # DAG pipelines, plugins, LLM providers [v0.2.0]
 │   │   └── src/
-│   │       ├── lib.rs            # Re-exports
-│   │       ├── engine.rs         # AgentSpace, PipelineConfig, StageContext
-│   │       ├── llm/              # LLM provider integrations
-│   │       │   ├── mod.rs        # LlmProvider trait
-│   │       │   ├── openai.rs     # OpenAI implementation
-│   │       │   ├── anthropic.rs  # Anthropic implementation
-│   │       │   └── ollama.rs     # Ollama (local) implementation
-│   │       └── agents/           # Built-in agent implementations
-│   │           ├── mod.rs        # AgentHandler trait
-│   │           ├── para_classifier.rs       # Suggest PARA category
-│   │           ├── zettelkasten_linker.rs   # Extract atomic notes, link
-│   │           ├── distiller.rs  # Summarize notes
-│   │           └── vault_writer.rs          # Create synthesis notes
+│   │       ├── engine/
+│   │       │   ├── dag_executor.rs      # Topological sort + parallel [NEW]
+│   │       │   ├── error_policy.rs      # Retry/skip/abort/fallback [NEW]
+│   │       │   ├── condition.rs         # Conditional execution [NEW]
+│   │       │   └── pipeline.rs          # v2 schema with depends_on
+│   │       ├── plugin/                  # Plugin system [NEW]
+│   │       │   ├── manifest.rs          # plugin.toml parsing
+│   │       │   ├── discovery.rs         # Auto-discovery
+│   │       │   └── runner.rs            # Subprocess execution
+│   │       ├── llm/                     # LLM provider integrations
+│   │       │   ├── openai.rs            # OpenAI (gpt-4o, etc)
+│   │       │   ├── anthropic.rs         # Anthropic (claude-3)
+│   │       │   └── ollama.rs            # Ollama (local)
+│   │       └── agents/                  # Built-in agents
+│   │           ├── para_classifier.rs   # Suggest PARA category
+│   │           ├── zettelkasten_linker.rs
+│   │           ├── distiller.rs         # Summarize notes
+│   │           └── vault_writer.rs      # Create synthesis notes
 │   │
 │   ├── review/                   # Review queue, approval gate
-│   │   ├── Cargo.toml
 │   │   └── src/
-│   │       ├── lib.rs            # Re-exports
 │   │       ├── queue.rs          # ReviewQueue, ReviewItem (SQLite)
-│   │       └── gate.rs           # gate() (approval logic)
+│   │       └── gate.rs           # Approval logic
 │   │
-│   └── cli/                      # CLI commands, MCP server
-│       ├── Cargo.toml
+│   ├── sync/                     # P2P sync via iroh [NEW crate]
+│   │   └── src/
+│   │       ├── identity.rs       # Ed25519 device identity
+│   │       ├── device_registry.rs # Known devices (JSON/TOML)
+│   │       ├── iroh_transport.rs  # QUIC-based iroh endpoint
+│   │       ├── transport.rs       # Abstract sync trait
+│   │       ├── protocol.rs        # Sync messages
+│   │       └── merge_driver.rs    # Merge orchestration
+│   │
+│   └── cli/                      # CLI + MCP server
 │       └── src/
-│           ├── lib.rs            # Module declarations
-│           ├── main.rs           # Entry point, clap parsing, command dispatch
-│           ├── commands/         # Command implementations
-│           │   ├── mod.rs
-│           │   ├── init.rs       # `init` command
-│           │   ├── note.rs       # `note create/read/update/delete/list/search`
-│           │   ├── config.rs     # `config show`
-│           │   └── agent.rs      # `agent run` (pipeline execution)
+│           ├── main.rs           # Entry point, clap parsing
+│           ├── commands/         # Command implementations (v0.2.0)
+│           │   ├── init.rs       # vault init
+│           │   ├── note.rs       # note create/read/list/search
+│           │   ├── config.rs     # config show
+│           │   ├── agent.rs      # agent run
+│           │   ├── device.rs     # device init/show/pair [NEW]
+│           │   ├── sync_cmd.rs   # sync now/status [NEW]
+│           │   ├── plugin.rs     # plugin list/run [NEW]
+│           │   └── mcp_cmd.rs    # mcp serve
 │           ├── mcp/              # MCP JSON-RPC server
-│           │   ├── mod.rs        # McpServer struct
 │           │   ├── server.rs     # stdin/stdout handling
 │           │   ├── handlers.rs   # Tool implementations
-│           │   └── messages.rs   # JSON-RPC message types
-│           └── output.rs         # OutputFormat (JSON/Human)
+│           │   └── messages.rs   # JSON-RPC messages
+│           └── output.rs         # JSON/Human output
 │
-├── pipelines/                    # Sample TOML pipeline configurations
-│   └── auto-process-inbox.toml   # Example: auto-classify inbox notes
+├── pipelines/                    # Sample TOML pipelines
+│   └── auto-process-inbox.toml   # v1 schema example
+│   └── parallel-processing.toml  # v2 DAG schema [NEW]
 │
-├── docs/                         # User & developer documentation
-│   ├── project-overview-pdr.md   # Product requirements & overview
-│   ├── code-standards.md         # Coding standards & patterns
-│   ├── system-architecture.md    # Architecture & crate relationships
-│   ├── project-roadmap.md        # Development phases & version plan
+├── docs/                         # Documentation
+│   ├── project-overview-pdr.md
+│   ├── code-standards.md
+│   ├── system-architecture.md    # Updated for v0.2.0
+│   ├── project-roadmap.md        # Updated for v0.2.0
 │   └── codebase-summary.md       # This file
 │
-├── plans/                        # Development planning documents
-│   ├── reports/                  # Research reports from subagents
-│   └── 260213-1610-agentic-note-mvp/   # MVP plan with phases
+├── plans/                        # Development planning
+│   └── reports/                  # Subagent reports
 │
 └── target/                       # Build artifacts (gitignored)
 ```
@@ -263,58 +266,79 @@ SearchEngine::get_orphaned_notes() → Result<Vec<NoteId>>  // Orphaned notes
 ---
 
 ### crates/agent
-**Lines of Code:** ~1200 LOC
-**Dependencies:** core, vault, search, review, tokio, reqwest, serde_json
+**Lines of Code:** ~1500 LOC (v0.2.0)
+**Dependencies:** core, vault, search, review, tokio, reqwest, petgraph, ort
 **Main Types:**
-- `PipelineConfig` — TOML-loaded pipeline definition
-- `StageConfig` — Single stage configuration
+- `PipelineConfig` — TOML-loaded pipeline (schema v1 or v2)
+- `StageConfig` — Single stage with depends_on, condition, error policy
 - `StageContext` — Input/output for agent execution
-- `PipelineResult` — Execution outcome
+- `ErrorPolicy` — Skip, Retry, Abort, Fallback
+- `DagExecutor` — Topological sort + parallel execution
 
-**Trait Definitions:**
+**Key Components:**
 ```rust
-pub trait AgentHandler: Send + Sync {
-    async fn execute(&self, context: &StageContext) -> Result<StageOutput>;
+pub struct PipelineConfig {
+    stages: Vec<StageConfig>,
+    schema_version: u32,           // 1 = sequential, 2 = DAG
+    default_on_error: ErrorPolicy,
 }
 
-pub trait LlmProvider: Send + Sync {
-    async fn complete(&self, prompt: &str) -> Result<String>;
-    async fn complete_with_schema(&self, prompt: &str, schema: &str) -> Result<String>;
+pub struct StageConfig {
+    depends_on: Vec<String>,       // DAG dependencies (new)
+    condition: Option<String>,     // Conditional execution (new)
+    on_error: ErrorPolicy,         // Retry/abort/skip/fallback (new)
+    fallback_agent: Option<String>, // Fallback on error (new)
+}
+
+pub struct DagExecutor {
+    // Topological sort + layer-by-layer parallel execution
+    // Handles retry backoff, conditions, and error policies
 }
 ```
 
 **Built-in Agents:**
 | Agent | Module | Purpose |
 |-------|--------|---------|
-| para-classifier | `agents/para_classifier.rs` | Suggest PARA category for notes |
-| zettelkasten-linker | `agents/zettelkasten_linker.rs` | Extract atomic concepts, suggest links |
-| distiller | `agents/distiller.rs` | Summarize long notes |
-| vault-writer | `agents/vault_writer.rs` | Create synthesis notes from queries |
+| para-classifier | `agents/para_classifier.rs` | Suggest PARA category |
+| zettelkasten-linker | `agents/zettelkasten_linker.rs` | Extract atomic concepts |
+| distiller | `agents/distiller.rs` | Summarize notes |
+| vault-writer | `agents/vault_writer.rs` | Create synthesis notes |
+
+**Plugin System (NEW):**
+- Manifest-driven: `plugin.toml` declares name, version, executable, timeout
+- Subprocess execution: JSON-RPC over stdin/stdout
+- Auto-discovery: `~/.agentic/plugins/` or custom paths
+- Custom agents can be loaded as plugins without recompilation
 
 **LLM Providers:**
 | Provider | Module | Support |
 |----------|--------|---------|
-| OpenAI | `llm/openai.rs` | gpt-4o, gpt-4-turbo, etc. |
+| OpenAI | `llm/openai.rs` | gpt-4o, gpt-4-turbo |
 | Anthropic | `llm/anthropic.rs` | claude-3-opus, claude-3-sonnet |
 | Ollama | `llm/ollama.rs` | Local models (llama2, mistral, etc.) |
 
-**Pipeline Execution Flow:**
-1. Load TOML config
-2. Validate structure
-3. For each Stage:
-   - Load LLM provider
-   - Create agent instance
-   - Execute agent with StageContext
-   - Collect output
-   - Apply review gate (trust level)
-   - Pass to next stage
+**DAG Pipeline Execution (v0.2.0):**
+1. Load TOML, detect schema version
+2. Build dependency DAG (topological sort)
+3. For each layer (topologically ordered stages):
+   - Evaluate conditions for each stage
+   - Spawn agents in parallel (tokio::spawn)
+   - Wait for all stages in layer to complete
+   - Apply error policies:
+     - Retry: exponential backoff (configurable)
+     - Skip: continue to next layer
+     - Abort: halt entire pipeline
+     - Fallback: try secondary agent
+   - Merge outputs into context
+4. Return final output or error
 
-**Key Decisions:**
-- Sequential pipelines (MVP, no DAG)
-- TOML for config (Cargo-familiar)
-- Async/await with tokio
-- JSON mode for structured output
-- Retry logic for parse failures
+**Key Improvements (v0.2.0):**
+- Parallel execution across independent stages
+- Retry logic with exponential backoff
+- Conditional stage skipping
+- Fallback agent chains
+- Plugin system for extensibility
+- Backward compatible with v1 sequential pipelines
 
 ---
 
@@ -352,12 +376,67 @@ gate(item, trust_level, queue) → Result<GateResult>       // Approval logic
 
 ---
 
+### crates/sync
+**Lines of Code:** ~700 LOC (NEW in v0.2.0)
+**Dependencies:** core, cas, tokio, iroh, ed25519-dalek, chrono, serde
+**Main Types:**
+- `DeviceIdentity` — Ed25519 keypair + peer ID
+- `DeviceRegistry` — Known devices with metadata
+- `SyncEngine` — Facade for sync operations
+- `SyncTransport` — Abstract trait for custom transports
+- `IrohTransport` — QUIC-based iroh implementation
+- `ConflictPolicy` — NewestWins, LongestWins, MergeBoth, Manual
+
+**Core Functions:**
+```rust
+// Device identity
+DeviceIdentity::init_or_load(agentic_dir) → Result<DeviceIdentity>
+identity.peer_id → PeerId (base32-encoded public key)
+
+// Device registry
+DeviceRegistry::load(path) → Result<DeviceRegistry>
+registry.add_device(peer_id, name) → Result<()>
+registry.list() → Vec<KnownDevice>
+
+// Sync engine
+SyncEngine::new_with_iroh(vault_path) → Result<SyncEngine>
+sync.sync_with_peer(peer_id, conflict_policy) → Result<MergeOutcome>
+```
+
+**Sync Workflow:**
+1. Both peers create snapshots of their vaults
+2. Exchange snapshot hashes via iroh QUIC
+3. Identify common base snapshot
+4. Perform three-way merge via CAS
+5. Apply conflict policy
+6. Both peers receive merged snapshot
+7. Apply changes to respective vaults
+
+**Storage:**
+- **Identity:** `.agentic/identity.key` (Ed25519 secret key)
+- **Devices:** `.agentic/devices.json` (known peers)
+- **CAS:** Used for merge operations (existing)
+
+**Conflict Policies:**
+- **newest-wins** — Latest modified timestamp wins
+- **longest-wins** — Longer note (by character count) wins
+- **merge-both** — Attempt semantic merge (if enabled)
+- **manual** — User selects A or B (default)
+
+**Key Decisions:**
+- Ed25519 for peer identity (fast, deterministic)
+- iroh for QUIC transport (modern, encrypted)
+- Device registry for trusted peers only
+- Manual conflict resolution default (safety)
+
+---
+
 ### crates/cli
-**Lines of Code:** ~1000 LOC
-**Dependencies:** core, vault, search, cas, agent, review, clap, tokio, tracing
+**Lines of Code:** ~1200 LOC (v0.2.0)
+**Dependencies:** core, vault, search, cas, agent, review, sync, clap, tokio, tracing
 **Entry Point:** `src/main.rs`
 
-**Command Structure:**
+**Command Structure (v0.2.0):**
 ```
 agentic-note [OPTIONS] <COMMAND>
 
@@ -366,35 +445,54 @@ Global Options:
   --json            JSON output mode
   -h, --help        Show help
 
-Commands:
+Commands (v0.2.0):
   init               Initialize a new vault
   note               Note operations
   config             Configuration management
+  device             Device identity & pairing (NEW)
+  sync               P2P sync operations (NEW)
+  plugin             Plugin management (NEW)
   mcp                MCP server
 ```
 
 **Subcommands:**
 ```
+# Note operations (unchanged)
 note create --title <TITLE> [--body <BODY>] [--para <PARA>] [--tags <TAGS>]
 note read <NOTE_ID>
 note list [--para <PARA>] [--tags <TAGS>] [--status <STATUS>]
-note search <QUERY>
+note search <QUERY> [--mode fts|semantic|hybrid]  # mode param NEW
 note delete <NOTE_ID>
 
-config show
+# Device & sync (NEW in v0.2.0)
+device init                           # Generate Ed25519 keypair
+device show                           # Display peer ID
+device pair <PEER_ID> [--name "Name"]
+device list                           # Show known devices
+device unpair <PEER_ID>
 
+sync now [--peer <PEER_ID>] [--policy newest-wins|longest-wins|merge-both|manual]
+sync status                           # Check sync state
+
+# Plugins (NEW in v0.2.0)
+plugin list                           # Show installed plugins
+plugin run <PLUGIN> [--config <TOML>]
+
+# Configuration
+config show
 mcp serve              # Start MCP JSON-RPC server
 ```
 
-**MCP Tools Exposed:**
+**MCP Tools Exposed (v0.2.0):**
 ```json
 {
   "note/create": "Create a new note",
   "note/read": "Read a specific note",
   "note/list": "List notes (with filtering)",
-  "note/search": "Full-text search",
+  "note/search": "Full-text search (fts/semantic/hybrid modes)",
   "vault/init": "Initialize a vault",
-  "vault/status": "Get vault statistics"
+  "vault/status": "Get vault statistics",
+  "plugin/list": "List installed plugins"
 }
 ```
 
@@ -403,10 +501,12 @@ mcp serve              # Start MCP JSON-RPC server
 - **JSON:** JSON objects → stdout
 - **Logs:** Structured tracing → stderr (AGENTIC_LOG env)
 
-**Key Design:**
+**Key Design (v0.2.0):**
+- Device identity management (Ed25519)
+- P2P sync commands with conflict policies
+- Plugin discovery and execution
+- Search mode selection (FTS/semantic/hybrid)
 - Global flags for consistency
-- Subcommand nesting for clear hierarchy
-- JSON mode for scripting
 - Async/await throughout
 - Structured logging to stderr
 
@@ -744,15 +844,17 @@ cargo yank --vers 0.1.0        # Yank version
 
 ---
 
-## Project Statistics
+## Project Statistics (v0.2.0)
 
 | Metric | Value |
 |--------|-------|
-| Crates | 7 |
-| Total LOC | ~4,500 |
-| Tests | 27 ✅ |
-| Warnings | 0 |
-| Dependencies | 20 direct |
-| Binary Size | ~45 MB (release) |
+| Crates | 8 (added sync) |
+| Total LOC | ~8,500 |
+| Core LOC | ~6,000 |
+| Tests | 30+ ✅ |
+| Compiler Warnings | 0 |
+| Dependencies | 25 direct (added petgraph, ort, iroh) |
+| New Features | DAG pipelines, P2P sync, embeddings, plugins |
+| Binary Size | ~55 MB (release) |
 | Docs | 100% of public APIs |
 

@@ -1,4 +1,5 @@
 use agentic_note_core::error::{AgenticError, Result};
+use agentic_note_core::types::ErrorPolicy;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -13,6 +14,12 @@ pub struct PipelineConfig {
     pub enabled: bool,
     pub trigger: TriggerConfig,
     pub stages: Vec<StageConfig>,
+    /// Schema version: 1 = sequential (legacy), 2 = DAG with `depends_on`.
+    #[serde(default = "default_schema_version")]
+    pub schema_version: u32,
+    /// Default error policy for stages that don't specify one.
+    #[serde(default)]
+    pub default_on_error: ErrorPolicy,
 }
 
 /// Configuration for a single stage within a pipeline.
@@ -26,22 +33,52 @@ pub struct StageConfig {
     pub config: toml::Value,
     /// Key under which this stage's output is stored in `StageContext`.
     pub output: String,
+    /// Names of stages that must complete before this stage runs (DAG edges).
+    #[serde(default)]
+    pub depends_on: Vec<String>,
+    /// Optional condition expression: `stage.output.field == "value"`.
+    /// Stage is skipped when expression evaluates to false.
+    #[serde(default)]
+    pub condition: Option<String>,
+    /// Error handling policy for this stage (overrides pipeline default).
+    #[serde(default)]
+    pub on_error: ErrorPolicy,
+    /// Maximum retry attempts (used when on_error = "retry").
+    #[serde(default = "default_retry_max")]
+    pub retry_max: u32,
+    /// Base backoff in milliseconds for exponential retry (doubles each attempt).
+    #[serde(default = "default_retry_backoff")]
+    pub retry_backoff_ms: u64,
+    /// Agent id to use as fallback when on_error = "fallback" and primary fails.
+    #[serde(default)]
+    pub fallback_agent: Option<String>,
 }
 
 fn default_true() -> bool {
     true
 }
 
+fn default_schema_version() -> u32 {
+    1
+}
+
 fn default_toml_table() -> toml::Value {
     toml::Value::Table(toml::map::Map::new())
+}
+
+fn default_retry_max() -> u32 {
+    3
+}
+
+fn default_retry_backoff() -> u64 {
+    1000
 }
 
 impl PipelineConfig {
     /// Load a single pipeline from a TOML file.
     pub fn load(path: &Path) -> Result<Self> {
-        let raw = std::fs::read_to_string(path).map_err(|e| {
-            AgenticError::NotFound(format!("{}: {e}", path.display()))
-        })?;
+        let raw = std::fs::read_to_string(path)
+            .map_err(|e| AgenticError::NotFound(format!("{}: {e}", path.display())))?;
         toml::from_str(&raw)
             .map_err(|e| AgenticError::Parse(format!("pipeline {}: {e}", path.display())))
     }

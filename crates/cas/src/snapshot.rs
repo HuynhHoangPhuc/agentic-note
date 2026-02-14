@@ -1,10 +1,10 @@
-use std::path::Path;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use agentic_note_core::{AgenticError, Result};
 use crate::cas::Cas;
 use crate::hash::ObjectId;
 use crate::tree::Tree;
+use agentic_note_core::{AgenticError, Result};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
@@ -23,7 +23,12 @@ impl Snapshot {
 
         let timestamp = Utc::now();
         // Use timestamp + tree id as snapshot id for determinism within a second
-        let raw = format!("{}{}{}", root_tree, timestamp.timestamp_nanos_opt().unwrap_or(0), cas.device_id);
+        let raw = format!(
+            "{}{}{}",
+            root_tree,
+            timestamp.timestamp_nanos_opt().unwrap_or(0),
+            cas.device_id
+        );
         let id = crate::hash::hash_bytes(raw.as_bytes());
 
         let snap = Snapshot {
@@ -34,8 +39,7 @@ impl Snapshot {
             message,
         };
 
-        let json = serde_json::to_vec(&snap)
-            .map_err(|e| AgenticError::Parse(e.to_string()))?;
+        let json = serde_json::to_vec(&snap).map_err(|e| AgenticError::Parse(e.to_string()))?;
         let snap_path = cas.snapshots_dir.join(format!("{}.json", id));
         std::fs::write(&snap_path, &json)?;
 
@@ -64,10 +68,12 @@ impl Snapshot {
     pub fn load(cas: &Cas, id: &ObjectId) -> Result<Snapshot> {
         let path = cas.snapshots_dir.join(format!("{}.json", id));
         if !path.exists() {
-            return Err(AgenticError::NotFound(format!("snapshot not found: {}", id)));
+            return Err(AgenticError::NotFound(format!(
+                "snapshot not found: {}",
+                id
+            )));
         }
         let data = std::fs::read(&path)?;
-        serde_json::from_slice(&data)
-            .map_err(|e| AgenticError::Parse(e.to_string()))
+        serde_json::from_slice(&data).map_err(|e| AgenticError::Parse(e.to_string()))
     }
 }

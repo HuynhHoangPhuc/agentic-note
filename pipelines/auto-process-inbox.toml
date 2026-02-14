@@ -1,3 +1,4 @@
+schema_version = 2
 name = "auto-process-inbox"
 description = "Automatically classify, link, distill, and file new inbox notes"
 enabled = true
@@ -11,18 +12,22 @@ debounce_ms = 500
 name = "classify"
 agent = "para-classifier"
 output = "classification"
+depends_on = []
 
 [[stages]]
 name = "link"
 agent = "zettelkasten-linker"
 output = "links"
+depends_on = ["classify"]
 
 [[stages]]
 name = "distill"
 agent = "distiller"
 output = "distillation"
+depends_on = ["classify"]
 
 [[stages]]
 name = "write"
 agent = "vault-writer"
 output = "changes"
+depends_on = ["link", "distill"]

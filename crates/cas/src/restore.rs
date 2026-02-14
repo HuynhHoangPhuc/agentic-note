@@ -1,9 +1,9 @@
-use std::path::Path;
-use agentic_note_core::Result;
 use crate::cas::Cas;
 use crate::hash::ObjectId;
 use crate::snapshot::Snapshot;
 use crate::tree::{EntryType, Tree};
+use agentic_note_core::Result;
+use std::path::Path;
 use tracing::info;
 
 /// Restore a vault to the state recorded in `snapshot_id`.
@@ -25,12 +25,7 @@ pub fn restore(vault: &Path, cas: &Cas, snapshot_id: &ObjectId) -> Result<()> {
 
 /// Recursively restore files from a tree object into `dest_dir`.
 /// Files present on disk but absent from the tree are removed.
-fn restore_tree(
-    vault_root: &Path,
-    cas: &Cas,
-    tree_id: &ObjectId,
-    dest_dir: &Path,
-) -> Result<()> {
+fn restore_tree(vault_root: &Path, cas: &Cas, tree_id: &ObjectId, dest_dir: &Path) -> Result<()> {
     let tree = Tree::load(&cas.blob_store, tree_id)?;
 
     // Collect names that should exist after restore

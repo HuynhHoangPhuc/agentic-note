@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use agentic_note_core::Result;
 use crate::blob::BlobStore;
 use crate::hash::ObjectId;
 use crate::tree::{EntryType, Tree};
+use agentic_note_core::Result;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DiffStatus {
@@ -68,7 +68,10 @@ fn diff_trees_inner(
                 if hash_a != hash_b {
                     match (etype_a, etype_b) {
                         (EntryType::Blob, EntryType::Blob) => {
-                            results.push(DiffEntry { path: full_path, status: DiffStatus::Modified });
+                            results.push(DiffEntry {
+                                path: full_path,
+                                status: DiffStatus::Modified,
+                            });
                         }
                         (EntryType::Tree, EntryType::Tree) => {
                             let sub = diff_trees_inner(store, hash_a, hash_b, &full_path)?;
@@ -108,7 +111,10 @@ fn collect_deleted(
     out: &mut Vec<DiffEntry>,
 ) -> Result<()> {
     match etype {
-        EntryType::Blob => out.push(DiffEntry { path: path.to_string(), status: DiffStatus::Deleted }),
+        EntryType::Blob => out.push(DiffEntry {
+            path: path.to_string(),
+            status: DiffStatus::Deleted,
+        }),
         EntryType::Tree => {
             let tree = Tree::load(store, hash)?;
             for entry in &tree.entries {
@@ -128,7 +134,10 @@ fn collect_added(
     out: &mut Vec<DiffEntry>,
 ) -> Result<()> {
     match etype {
-        EntryType::Blob => out.push(DiffEntry { path: path.to_string(), status: DiffStatus::Added }),
+        EntryType::Blob => out.push(DiffEntry {
+            path: path.to_string(),
+            status: DiffStatus::Added,
+        }),
         EntryType::Tree => {
             let tree = Tree::load(store, hash)?;
             for entry in &tree.entries {

@@ -67,16 +67,36 @@ impl fmt::Display for ParaCategory {
 /// Note maturity status following digital garden metaphor.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum NoteStatus {
+    #[default]
     Seed,
     Budding,
     Evergreen,
 }
 
-impl Default for NoteStatus {
-    fn default() -> Self {
-        Self::Seed
-    }
+/// Conflict resolution policy for merge operations.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+#[derive(Default)]
+pub enum ConflictPolicy {
+    NewestWins,
+    LongestWins,
+    MergeBoth,
+    #[default]
+    Manual,
+}
+
+/// Error handling policy for pipeline stage failures.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+#[derive(Default)]
+pub enum ErrorPolicy {
+    #[default]
+    Skip,
+    Retry,
+    Abort,
+    Fallback,
 }
 
 /// YAML frontmatter embedded in each markdown note.

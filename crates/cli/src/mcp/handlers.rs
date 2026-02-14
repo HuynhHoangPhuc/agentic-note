@@ -1,7 +1,9 @@
 /// Tool call dispatch for MCP `tools/call` method.
-use agentic_note_search::SearchEngine;
-use agentic_note_vault::{Note, NoteFilter, Vault, init_vault};
+use agentic_note_agent::plugin;
+use agentic_note_core::config::AppConfig;
 use agentic_note_core::types::{NoteStatus, ParaCategory};
+use agentic_note_search::SearchEngine;
+use agentic_note_vault::{init_vault, Note, NoteFilter, Vault};
 use serde_json::Value;
 use std::path::Path;
 
@@ -9,24 +11,30 @@ use std::path::Path;
 pub async fn handle_tool(name: &str, args: Value, vault_path: &Path) -> anyhow::Result<Value> {
     match name {
         "note/create" => tool_note_create(args, vault_path),
-        "note/read"   => tool_note_read(args, vault_path),
-        "note/list"   => tool_note_list(args, vault_path),
+        "note/read" => tool_note_read(args, vault_path),
+        "note/list" => tool_note_list(args, vault_path),
         "note/search" => tool_note_search(args, vault_path),
-        "vault/init"  => tool_vault_init(args, vault_path),
+        "vault/init" => tool_vault_init(args, vault_path),
         "vault/status" => tool_vault_status(vault_path),
+        "plugin/list" => tool_plugin_list(vault_path),
         _ => anyhow::bail!("unknown tool: {name}"),
     }
 }
 
 fn tool_note_create(args: Value, vault_path: &Path) -> anyhow::Result<Value> {
-    let title = args["title"].as_str()
+    let title = args["title"]
+        .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required param: title"))?
         .to_string();
     let para_str = args["para"].as_str().unwrap_or("inbox");
     let body = args["body"].as_str().unwrap_or("").to_string();
     let tags: Vec<String> = args["tags"]
         .as_array()
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_default();
 
     let para = parse_para(para_str)?;
@@ -41,7 +49,8 @@ fn tool_note_create(args: Value, vault_path: &Path) -> anyhow::Result<Value> {
 }
 
 fn tool_note_read(args: Value, vault_path: &Path) -> anyhow::Result<Value> {
-    let target = args["target"].as_str()
+    let target = args["target"]
+        .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required param: target"))?;
     let path = resolve_note_path(vault_path, target)?;
     let note = Note::read(&path)?;
@@ -68,37 +77,84 @@ fn tool_note_list(args: Value, vault_path: &Path) -> anyhow::Result<Value> {
     let mut notes = vault.list_notes(&filter)?;
     notes.truncate(limit);
 
-    let items: Vec<Value> = notes.iter().map(|n| serde_json::json!({
-        "id": n.id.to_string(),
-        "title": n.title,
-        "para": format!("{:?}", n.para).to_lowercase(),
-        "tags": n.tags,
-        "status": format!("{:?}", n.status).to_lowercase(),
-        "modified": n.modified.to_rfc3339(),
-        "path": n.path.display().to_string(),
-    })).collect();
+    let items: Vec<Value> = notes
+        .iter()
+        .map(|n| {
+            serde_json::json!({
+                "id": n.id.to_string(),
+                "title": n.title,
+                "para": format!("{:?}", n.para).to_lowercase(),
+                "tags": n.tags,
+                "status": format!("{:?}", n.status).to_lowercase(),
+                "modified": n.modified.to_rfc3339(),
+                "path": n.path.display().to_string(),
+            })
+        })
+        .collect();
 
     Ok(serde_json::json!({ "notes": items, "count": items.len() }))
 }
 
 fn tool_note_search(args: Value, vault_path: &Path) -> anyhow::Result<Value> {
-    let query = args["query"].as_str()
+    let query = args["query"]
+        .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required param: query"))?;
     let limit = args["limit"].as_u64().unwrap_or(10) as usize;
+    let mode = args["mode"].as_str().unwrap_or("fts");
 
-    let engine = SearchEngine::open(vault_path)
-        .map_err(|e| anyhow::anyhow!("search engine: {e}"))?;
-    let results = engine.search_fts(query, limit)
-        .map_err(|e| anyhow::anyhow!("search: {e}"))?;
+    #[allow(unused_mut)]
+    let mut engine =
+        SearchEngine::open(vault_path).map_err(|e| anyhow::anyhow!("search engine: {e}"))?;
 
-    let items: Vec<Value> = results.iter().map(|r| serde_json::json!({
-        "id": r.id.to_string(),
-        "title": r.title,
-        "score": r.score,
-        "snippet": r.snippet,
-    })).collect();
+    let results = match mode {
+        #[cfg(feature = "embeddings")]
+        "semantic" => engine
+            .search_semantic(query, limit)
+            .map_err(|e| anyhow::anyhow!("semantic search: {e}"))?,
+        #[cfg(feature = "embeddings")]
+        "hybrid" => engine
+            .search_hybrid(query, limit)
+            .map_err(|e| anyhow::anyhow!("hybrid search: {e}"))?,
+        _ => engine
+            .search_fts(query, limit)
+            .map_err(|e| anyhow::anyhow!("search: {e}"))?,
+    };
 
-    Ok(serde_json::json!({ "results": items, "count": items.len() }))
+    let items: Vec<Value> = results
+        .iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.id.to_string(),
+                "title": r.title,
+                "score": r.score,
+                "snippet": r.snippet,
+            })
+        })
+        .collect();
+
+    Ok(serde_json::json!({ "results": items, "count": items.len(), "mode": mode }))
+}
+
+fn tool_plugin_list(vault_path: &Path) -> anyhow::Result<Value> {
+    let plugins_dir = match AppConfig::load(Some(vault_path.to_path_buf())) {
+        Ok(config) => vault_path.join(&config.plugins.plugins_dir),
+        Err(_) => vault_path.join("plugins"),
+    };
+    let discovered = plugin::discover_plugins(&plugins_dir).unwrap_or_default();
+
+    let items: Vec<Value> = discovered
+        .iter()
+        .map(|(manifest, path)| {
+            serde_json::json!({
+                "name": manifest.name,
+                "version": manifest.version,
+                "description": manifest.description,
+                "path": path.display().to_string(),
+            })
+        })
+        .collect();
+
+    Ok(serde_json::json!({ "plugins": items, "count": items.len() }))
 }
 
 fn tool_vault_init(args: Value, vault_path: &Path) -> anyhow::Result<Value> {
@@ -126,11 +182,11 @@ fn tool_vault_status(vault_path: &Path) -> anyhow::Result<Value> {
 
 fn parse_para(s: &str) -> anyhow::Result<ParaCategory> {
     match s.to_lowercase().as_str() {
-        "inbox"        => Ok(ParaCategory::Inbox),
-        "projects"     => Ok(ParaCategory::Projects),
-        "areas"        => Ok(ParaCategory::Areas),
-        "resources"    => Ok(ParaCategory::Resources),
-        "archives"     => Ok(ParaCategory::Archives),
+        "inbox" => Ok(ParaCategory::Inbox),
+        "projects" => Ok(ParaCategory::Projects),
+        "areas" => Ok(ParaCategory::Areas),
+        "resources" => Ok(ParaCategory::Resources),
+        "archives" => Ok(ParaCategory::Archives),
         "zettelkasten" | "zk" => Ok(ParaCategory::Zettelkasten),
         _ => anyhow::bail!("invalid PARA category: {s}"),
     }
@@ -138,8 +194,8 @@ fn parse_para(s: &str) -> anyhow::Result<ParaCategory> {
 
 fn parse_status(s: &str) -> anyhow::Result<NoteStatus> {
     match s.to_lowercase().as_str() {
-        "seed"      => Ok(NoteStatus::Seed),
-        "budding"   => Ok(NoteStatus::Budding),
+        "seed" => Ok(NoteStatus::Seed),
+        "budding" => Ok(NoteStatus::Budding),
         "evergreen" => Ok(NoteStatus::Evergreen),
         _ => anyhow::bail!("invalid status: {s}"),
     }
@@ -148,8 +204,7 @@ fn parse_status(s: &str) -> anyhow::Result<NoteStatus> {
 /// Resolve a note target (ULID string or file path) to an actual file path.
 /// All resolved paths are validated to be within the vault directory.
 fn resolve_note_path(vault: &Path, target: &str) -> anyhow::Result<std::path::PathBuf> {
-    let vault_canon = vault.canonicalize()
-        .unwrap_or_else(|_| vault.to_path_buf());
+    let vault_canon = vault.canonicalize().unwrap_or_else(|_| vault.to_path_buf());
 
     let as_path = std::path::PathBuf::from(target);
     if as_path.exists() {

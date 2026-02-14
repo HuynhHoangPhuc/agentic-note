@@ -2,7 +2,7 @@
 
 ## Overview
 
-Agentic-note is a modular, local-first Rust application designed as a Cargo workspace with 7 specialized crates. Each crate has a single responsibility and communicates through well-defined interfaces. This document describes the architecture, crate relationships, and data flow.
+Agentic-note is a modular, local-first Rust application designed as a Cargo workspace with 8 specialized crates. Each crate has a single responsibility and communicates through well-defined interfaces. This document describes the architecture, crate relationships, and data flow for v0.2.0 and beyond.
 
 ---
 
@@ -13,35 +13,40 @@ Agentic-note is a modular, local-first Rust application designed as a Cargo work
 ```
                         ┌─────────────────────────────────────┐
                         │         CLI (Binary)                 │
-                        │    • Commands                        │
-                        │    • MCP Server                      │
-                        │    • JSON Output                     │
+                        │  • Commands (init, note, device)    │
+                        │  • MCP Server / RPC                 │
+                        │  • JSON/Human output                │
                         └──────────────┬──────────────────────┘
                                        │
-                    ┌──────────────────┼──────────────────────┐
-                    │                  │                      │
-                    ▼                  ▼                      ▼
-            ┌──────────────┐  ┌────────────────┐  ┌──────────────────┐
-            │    Vault     │  │     Search     │  │      Agent       │
-            │              │  │                │  │                  │
-            │ • Note CRUD  │  │ • tantivy FTS  │  │ • AgentSpace     │
-            │ • Frontmatter│  │ • SQLite graph │  │ • LLM providers  │
-            │ • PARA       │  │ • Reindex      │  │ • 4 built-in     │
-            └──────┬───────┘  └────┬───────────┘  └──────┬───────────┘
-                   │               │                     │
-                   └───────────────┼─────────────────────┘
-                                   │
-                        ┌──────────┼──────────┐
-                        │          │          │
-                        ▼          ▼          ▼
-                    ┌────────┐ ┌──────┐ ┌─────────┐
-                    │  CAS   │ │Core  │ │ Review  │
-                    │        │ │      │ │         │
-                    │ • Hash │ │Types │ │ • Queue │
-                    │ • Blob │ │Errors│ │ • Gate  │
-                    │ • Tree │ │Config│ │         │
-                    │ • Snap │ │Ulids │ │         │
-                    └────────┘ └──────┘ └─────────┘
+         ┌─────────────────────────────┼─────────────────────────────┐
+         │                             │                             │
+         ▼                             ▼                             ▼
+    ┌──────────────┐          ┌─────────────────┐         ┌──────────────────┐
+    │    Vault     │          │     Search      │         │      Agent       │
+    │              │          │                 │         │                  │
+    │ • Note CRUD  │          │ • tantivy FTS   │         │ • DAG Executor   │
+    │ • Frontmatter│          │ • Embeddings*   │         │ • Plugin system  │
+    │ • PARA       │          │ • Semantic*     │         │ • Error recovery │
+    │ • Markdown   │          │ • SQLite graph  │         │ • LLM providers  │
+    └──────┬───────┘          └────┬────────────┘         └──────┬───────────┘
+           │                       │                              │
+           │               ┌───────┴────────┐                    │
+           │               │                │                    │
+           └───────────────┼────────────────┼────────────────────┘
+                           │                │
+                ┌──────────┼──────────┐     │
+                │          │          │     │
+                ▼          ▼          ▼     ▼
+            ┌────────┐ ┌──────┐ ┌─────────┐┌──────────┐
+            │  CAS   │ │Core  │ │ Review  ││  Sync    │
+            │        │ │      │ │         ││          │
+            │ • Hash │ │Types │ │ • Queue ││ • Iroh   │
+            │ • Blob │ │Errors│ │ • Gate  ││ • Device │
+            │ • Tree │ │Config││         ││ • Merge  │
+            │ • Snap │ │Ulids │ │         ││ • Protocol
+            └────────┘ └──────┘ └─────────┘└──────────┘
+
+Legend: * = optional with embeddings feature
 ```
 
 ### Crate Descriptions
@@ -161,23 +166,34 @@ impl Cas {
 
 ---
 
-#### 4. **search** — Full-Text Search & Graph Indexing
-**Purpose:** Index notes for FTS and maintain tag/link relationships in a graph database.
+#### 4. **search** — Full-Text & Semantic Search (v0.2.0)
+**Purpose:** Index notes for FTS, semantic search, and maintain tag/link relationships in a graph database.
 
 **Key Modules:**
-- `fts.rs` — `FtsIndex`: tantivy full-text search implementation
+- `fts.rs` — `FtsIndex`: tantivy full-text search
 - `graph.rs` — `Graph`: SQLite-backed tag and backlink indexing
+- `embedding.rs` — (optional, behind `embeddings` feature) ONNX Runtime embeddings
+- `hybrid.rs` — (optional) Combined FTS + semantic scoring
+- `model_download.rs` — (optional) Auto-download all-MiniLM-L6-v2 ONNX model
 - `reindex.rs` — Incremental reindexing logic
-- `lib.rs` — `SearchEngine` facade combining FTS and graph
 
 **Public API:**
 ```rust
 pub struct SearchResult { id, title, score }
-pub struct SearchEngine { fts, db }
+pub struct SearchEngine { fts, db, embedding_index? }
 
 impl SearchEngine {
     pub fn open(vault_path: &Path) -> Result<Self>;
+
+    // FTS search
     pub fn search_fts(&self, query: &str, limit: usize) -> Result<Vec<SearchResult>>;
+
+    // Semantic search (requires embeddings feature)
+    pub async fn search_semantic(&self, query: &str, limit: usize) -> Result<Vec<SearchResult>>;
+
+    // Hybrid: FTS + semantic with combined scoring
+    pub async fn search_hybrid(&self, query: &str, limit: usize) -> Result<Vec<SearchResult>>;
+
     pub fn index_note(&self, note: &Note) -> Result<()>;
     pub fn reindex_all(&self, vault: &Vault) -> Result<()>;
     pub fn get_backlinks(&self, note_id: NoteId) -> Result<Vec<NoteId>>;
@@ -187,56 +203,68 @@ impl SearchEngine {
 
 **Storage:**
 - **FTS Index:** tantivy inverted index in `.agentic/tantivy/`
-- **Graph DB:** SQLite tables in `.agentic/index.db` for tags and links
+- **Embeddings:** ONNX model in `~/.cache/agentic-note/models/` (auto-downloaded)
+- **Graph DB:** SQLite tables in `.agentic/index.db` for tags, links, embeddings
+
+**Search Modes:**
+- **FTS:** Keyword-based (default, always available)
+- **Semantic:** Vector similarity (requires `embeddings` feature)
+- **Hybrid:** Combined FTS + semantic scoring (requires `embeddings` feature)
 
 **Indexing Strategy:**
 - Create index on note creation
 - Increment index on note update
 - Full reindex available for repair
+- Embeddings computed lazily on first semantic search
 
 ---
 
-#### 5. **agent** — AgentSpace Engine & LLM Integration
-**Purpose:** Execute pipelines of sequential agents with LLM-powered transformations and review gates.
+#### 5. **agent** — AgentSpace Engine, DAG Pipelines & LLM Integration
+**Purpose:** Execute DAG pipelines with parallel stages, LLM-powered transformations, error recovery, and plugin system.
 
 **Key Modules:**
-- `engine.rs` — `AgentSpace`: pipeline loader and executor
+- `engine/` — Core types and validators
+- `engine/dag_executor.rs` — Topological sort + parallel execution
+- `engine/error_policy.rs` — Retry/skip/abort/fallback strategies
+- `engine/condition.rs` — Conditional stage execution
 - `llm/` — Provider implementations (OpenAI, Anthropic, Ollama)
 - `agents/` — 4 built-in agents (para-classifier, zettelkasten-linker, distiller, vault-writer)
+- `plugin/` — Plugin discovery, manifest, and subprocess execution
 
-**Core Types:**
+**Core Types (v2.0 Pipeline Schema):**
 ```rust
 pub struct PipelineConfig {
     name: String,
     enabled: bool,
     trigger: TriggerConfig,
     stages: Vec<StageConfig>,
+    schema_version: u32,      // 1 = sequential, 2 = DAG
+    default_on_error: ErrorPolicy,
 }
 
 pub struct StageConfig {
     name: String,
     agent: String,
-    llm_provider: String,
-    trust_level: TrustLevel,  // Manual | Review | Auto
-    output: String,
+    config: toml::Value,       // Agent-specific config
+    output: String,            // Output key in context
+    depends_on: Vec<String>,   // DAG edges (stage names)
+    condition: Option<String>, // Expression evaluation
+    on_error: ErrorPolicy,     // Retry/skip/abort/fallback
+    retry_max: u32,
+    retry_backoff_ms: u64,
+    fallback_agent: Option<String>,
 }
 
-pub struct StageContext {
-    stage_name: String,
-    inputs: Map<String, Value>,  // Previous stage output
-    vault: Arc<Vault>,
-    search: Arc<SearchEngine>,
-    llm: Arc<dyn LlmProvider>,
-}
-
-pub enum StageOutput {
-    NoteChanges(Vec<NoteChange>),
-    Suggestions(Vec<Suggestion>),
-    Metadata(Map<String, Value>),
+pub enum ErrorPolicy {
+    Skip,                      // Continue to next stage
+    Retry,                     // Retry with backoff
+    Abort,                     // Abort entire pipeline
+    Fallback,                  // Use fallback_agent
 }
 
 pub trait AgentHandler: Send + Sync {
     async fn execute(&self, context: &StageContext) -> Result<StageOutput>;
+    fn agent_id(&self) -> &str;
 }
 
 pub trait LlmProvider: Send + Sync {
@@ -247,23 +275,27 @@ pub trait LlmProvider: Send + Sync {
 
 **Built-in Agents:**
 
-| Agent | Input | Output | Example |
-|-------|-------|--------|---------|
-| **para-classifier** | Inbox note body | Suggested PARA category | "This project task → projects" |
-| **zettelkasten-linker** | Note body | Extracted atomic concepts + links | Detects `[[id]]` refs, suggests similar notes |
-| **distiller** | Full note | Concise summary | Summarizes lengthy notes |
-| **vault-writer** | Search query results | New synthesis note | Creates "daily synthesis" from 5 related notes |
+| Agent | Module | Input | Output |
+|-------|--------|-------|--------|
+| **para-classifier** | `agents/para_classifier.rs` | Inbox note body | Suggested PARA category |
+| **zettelkasten-linker** | `agents/zettelkasten_linker.rs` | Note body | Extracted atomic concepts + links |
+| **distiller** | `agents/distiller.rs` | Full note | Concise summary |
+| **vault-writer** | `agents/vault_writer.rs` | Search results | New synthesis note |
 
-**Pipeline Execution Flow:**
+**Plugin System:**
+- Manifest-driven: `plugin.toml` with name, version, executable, timeout
+- Subprocess execution: JSON-RPC over stdio
+- Discovery: auto-scan `~/.agentic/plugins/` or specified directories
+
+**DAG Pipeline Execution:**
 ```
-Load TOML → Validate Structure → For each Stage:
-    ├─ Load LLM Provider
-    ├─ Instantiate Agent
-    ├─ Pass StageContext (previous output)
-    ├─ Execute Agent
-    ├─ Collect Output
-    ├─ Enqueue for Review (based on trust_level)
-    └─ Pass to next Stage
+Load TOML → Build DAG (toposort) → For each Layer (parallel):
+    ├─ Check conditions
+    ├─ Spawn agents in parallel
+    ├─ Wait for completion
+    ├─ Apply error policies (retry/skip/abort/fallback)
+    ├─ Merge outputs into context
+    └─ Continue to next layer
 ```
 
 ---
@@ -315,26 +347,103 @@ impl ReviewQueue {
 
 ---
 
-#### 7. **cli** — Command-Line Interface & MCP Server
+#### 7. **sync** — P2P Sync via iroh (NEW)
+**Purpose:** Peer-to-peer vault synchronization with device identity, conflict resolution, and merge orchestration.
+
+**Key Modules:**
+- `identity.rs` — Ed25519 device keypair generation and peer ID derivation
+- `device_registry.rs` — Known devices TOML/JSON persistence
+- `transport.rs` — Abstract sync protocol trait
+- `iroh_transport.rs` — QUIC-based iroh binding (endpoint + node)
+- `protocol.rs` — Sync request/response messages
+- `merge_driver.rs` — CAS-aware three-way merge orchestration
+
+**Core Types:**
+```rust
+pub struct DeviceIdentity {
+    pub secret_key: SigningKey,
+    pub peer_id: PeerId,
+    pub created: DateTime<Utc>,
+}
+
+pub struct KnownDevice {
+    pub peer_id: PeerId,
+    pub name: Option<String>,
+    pub last_seen: Option<DateTime<Utc>>,
+}
+
+pub enum ConflictPolicy {
+    NewestWins,                // Latest modified wins
+    LongestWins,               // Longest note wins
+    MergeBoth,                 // Merge both versions
+    Manual,                    // User selects A or B
+}
+
+pub trait SyncTransport: Send + Sync {
+    async fn connect(&self, peer: PeerId) -> Result<SyncConnection>;
+    async fn listen(&self) -> Result<SyncConnection>;
+}
+
+pub struct SyncEngine {
+    pub identity: DeviceIdentity,
+    pub registry: DeviceRegistry,
+    pub transport: Box<dyn SyncTransport>,
+    pub cas: Cas,
+    vault_path: PathBuf,
+}
+```
+
+**Sync Flow:**
+```
+Peer A                         Peer B
+├─ Create snapshot A          ├─ Create snapshot B
+├─ Query snapshots via iroh   ├─ Receive sync request
+├─ Receive snapshot B         ├─ Apply conflict policy
+├─ Determine common base      ├─ Return merged snapshot
+├─ Three-way merge via CAS
+└─ Apply & persist
+```
+
+**Security:**
+- Ed25519 per-device keypair
+- Peer ID = public key hash
+- iroh QUIC encryption (TLS 1.3)
+- Device registry for trusted peers only
+
+---
+
+#### 8. **cli** — Command-Line Interface & MCP Server
 **Purpose:** User-facing CLI commands and MCP server for AI assistant integration.
 
 **Key Modules:**
 - `main.rs` — Entry point, clap CLI parsing
-- `commands/` — Command implementations (init, note, config, agent)
+- `commands/` — Command implementations (init, note, config, agent, device, sync, plugin, mcp)
 - `mcp/` — MCP JSON-RPC server implementation
 - `output.rs` — JSON/human output formatting
 
 **CLI Commands:**
 ```bash
+# Vault & Notes
 agentic-note init ~/vault              # Initialize vault
-agentic-note note create \
-  --title "My Note" \
-  --para inbox \
-  --tags rust,cli                      # Create note
+agentic-note note create --title "My Note" --para inbox --tags rust,cli
+agentic-note note list [--para <PARA>] [--tags <TAGS>]
+agentic-note note search <QUERY> [--mode hybrid]
+agentic-note note read <NOTE_ID>
 
-agentic-note note list                 # List all notes
-agentic-note note list --para inbox    # Filter by PARA
-agentic-note note search "rust"        # Full-text search
+# Device & Sync (NEW)
+agentic-note device init               # Generate Ed25519 identity
+agentic-note device show               # Display peer ID
+agentic-note device pair <PEER_ID> [--name "Device Name"]
+agentic-note device list               # Show known devices
+agentic-note device unpair <PEER_ID>   # Remove peer
+agentic-note sync now [--peer <PEER_ID>] [--policy newest-wins]
+agentic-note sync status               # Check sync state
+
+# Plugins (NEW)
+agentic-note plugin list               # Show installed plugins
+agentic-note plugin run <PLUGIN> [--config <TOML>]
+
+# Configuration
 agentic-note config show               # Display config
 agentic-note mcp serve                 # Start MCP server
 ```
@@ -344,9 +453,10 @@ agentic-note mcp serve                 # Start MCP server
 note/create      - Create a new note
 note/read        - Read a specific note
 note/list        - List notes with optional filtering
-note/search      - Full-text search
+note/search      - Full-text search (with mode param: fts/semantic/hybrid)
 vault/init       - Initialize a vault
 vault/status     - Get vault statistics
+plugin/list      - List installed plugins
 ```
 
 **Output Modes:**
@@ -598,22 +708,23 @@ AgenticError (from core)
 
 ---
 
-## Known Limitations (MVP)
+## Known Limitations (v0.2.0)
 
-- **Sequential pipelines only** — No parallel stage execution
-- **No P2P sync** — Local-only, deferred to v2
-- **No conflict merge markers** — Pick A or B only
-- **Single LLM per stage** — No fallback chain
+- **Sequential conflict resolution** — Manual merge only (auto-policies upcoming)
+- **Single vault per sync session** — Multi-vault sync deferred to v0.3
+- **No compression** — iroh transfer uncompressed
+- **Embeddings optional** — Not all deployments need semantic search
+- **Plugin security** — No sandboxing (trust plugin authors)
 - **No partial snapshots** — Restore entire vault or nothing
 
 ---
 
-## Future Architecture Improvements (v2+)
+## Future Architecture Improvements (v0.3+)
 
-1. **P2P Sync** — When iroh API stabilizes
-2. **DAG Pipelines** — Parallel stages with dependency graphs
-3. **Embeddings** — Semantic search with all-MiniLM-L6-v2
-4. **Plugin System** — Load custom agents from external crates
-5. **Database** — Optional postgres for large deployments
-6. **Event Bus** — Publish/subscribe for pipeline coordination
+1. **Batch sync** — Multi-peer simultaneous sync
+2. **Compression** — Delta-based iroh sync
+3. **Auto-merge policies** — Semantic-aware conflict resolution
+4. **Plugin sandboxing** — WebAssembly or lightweight container isolation
+5. **PostgreSQL optional** — For large deployments (10k+ notes)
+6. **Event bus** — Publish/subscribe for pipeline coordination and webhooks
 

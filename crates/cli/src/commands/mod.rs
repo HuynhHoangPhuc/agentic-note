@@ -1,12 +1,17 @@
 pub mod config;
+pub mod device;
 pub mod init;
 pub mod mcp_cmd;
 pub mod note;
+pub mod plugin;
+pub mod sync_cmd;
 
 use clap::Subcommand;
 use std::path::PathBuf;
 
+pub use device::DeviceCmd;
 pub use mcp_cmd::McpCmd;
+pub use sync_cmd::SyncCmd;
 
 #[derive(Subcommand)]
 pub enum Commands {
@@ -30,10 +35,31 @@ pub enum Commands {
         #[command(subcommand)]
         cmd: McpCmd,
     },
+    /// Plugin operations
+    Plugin {
+        #[command(subcommand)]
+        cmd: PluginCmd,
+    },
+    /// Device identity and pairing
+    Device {
+        #[command(subcommand)]
+        cmd: DeviceCmd,
+    },
+    /// P2P sync operations
+    Sync {
+        #[command(subcommand)]
+        cmd: SyncCmd,
+    },
 }
 
 #[derive(Subcommand)]
 pub enum ConfigCmd {
     /// Show current configuration
     Show,
+}
+
+#[derive(Subcommand)]
+pub enum PluginCmd {
+    /// List discovered plugins
+    List,
 }

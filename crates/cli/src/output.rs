@@ -8,7 +8,10 @@ pub enum OutputFormat {
 }
 
 pub fn print_json<T: Serialize>(value: &T) {
-    println!("{}", serde_json::to_string_pretty(value).unwrap_or_default());
+    println!(
+        "{}",
+        serde_json::to_string_pretty(value).unwrap_or_default()
+    );
 }
 
 pub fn print_note(note: &Note, fmt: OutputFormat) {
@@ -32,8 +35,14 @@ pub fn print_note(note: &Note, fmt: OutputFormat) {
             println!("Title:    {}", note.frontmatter.title);
             println!("PARA:     {}", note.frontmatter.para);
             println!("Tags:     {}", note.frontmatter.tags.join(", "));
-            println!("Created:  {}", note.frontmatter.created.format("%Y-%m-%d %H:%M"));
-            println!("Modified: {}", note.frontmatter.modified.format("%Y-%m-%d %H:%M"));
+            println!(
+                "Created:  {}",
+                note.frontmatter.created.format("%Y-%m-%d %H:%M")
+            );
+            println!(
+                "Modified: {}",
+                note.frontmatter.modified.format("%Y-%m-%d %H:%M")
+            );
             println!("Path:     {}", note.path.display());
             println!("---");
             println!("{}", note.body);

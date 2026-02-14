@@ -8,17 +8,15 @@ const DELIMITER: &str = "---";
 pub fn parse(raw: &str) -> Result<(FrontMatter, String)> {
     let trimmed = raw.trim_start();
     if !trimmed.starts_with(DELIMITER) {
-        return Err(AgenticError::Parse(
-            "missing frontmatter delimiter".into(),
-        ));
+        return Err(AgenticError::Parse("missing frontmatter delimiter".into()));
     }
 
     let after_first = &trimmed[DELIMITER.len()..];
     let after_first = after_first.strip_prefix('\n').unwrap_or(after_first);
 
-    let end_pos = after_first.find(&format!("\n{DELIMITER}")).ok_or_else(|| {
-        AgenticError::Parse("missing closing frontmatter delimiter".into())
-    })?;
+    let end_pos = after_first
+        .find(&format!("\n{DELIMITER}"))
+        .ok_or_else(|| AgenticError::Parse("missing closing frontmatter delimiter".into()))?;
 
     let yaml_str = &after_first[..end_pos];
     let body_start = end_pos + 1 + DELIMITER.len(); // skip \n---

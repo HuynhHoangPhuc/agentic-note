@@ -31,12 +31,7 @@ impl<'a> Graph<'a> {
     }
 
     /// Update tags and links for a note (replaces existing).
-    pub fn update_note(
-        &self,
-        id: &NoteId,
-        tags: &[String],
-        links: &[String],
-    ) -> Result<()> {
+    pub fn update_note(&self, id: &NoteId, tags: &[String], links: &[String]) -> Result<()> {
         let id_str = id.to_string();
 
         // Clear existing
@@ -48,20 +43,24 @@ impl<'a> Graph<'a> {
             .map_err(|e| AgenticError::Search(format!("delete links: {e}")))?;
 
         // Insert tags
-        let mut tag_stmt = self.conn
+        let mut tag_stmt = self
+            .conn
             .prepare("INSERT OR IGNORE INTO note_tags (note_id, tag) VALUES (?1, ?2)")
             .map_err(|e| AgenticError::Search(format!("prepare tag insert: {e}")))?;
         for tag in tags {
-            tag_stmt.execute(rusqlite::params![&id_str, tag])
+            tag_stmt
+                .execute(rusqlite::params![&id_str, tag])
                 .map_err(|e| AgenticError::Search(format!("insert tag: {e}")))?;
         }
 
         // Insert links
-        let mut link_stmt = self.conn
+        let mut link_stmt = self
+            .conn
             .prepare("INSERT OR IGNORE INTO note_links (source_id, target_id) VALUES (?1, ?2)")
             .map_err(|e| AgenticError::Search(format!("prepare link insert: {e}")))?;
         for link in links {
-            link_stmt.execute(rusqlite::params![&id_str, link])
+            link_stmt
+                .execute(rusqlite::params![&id_str, link])
                 .map_err(|e| AgenticError::Search(format!("insert link: {e}")))?;
         }
 
@@ -71,21 +70,26 @@ impl<'a> Graph<'a> {
     /// Remove a note from the graph.
     pub fn remove_note(&self, id: &NoteId) -> Result<()> {
         let id_str = id.to_string();
-        self.conn.execute("DELETE FROM note_tags WHERE note_id = ?1", [&id_str])
+        self.conn
+            .execute("DELETE FROM note_tags WHERE note_id = ?1", [&id_str])
             .map_err(|e| AgenticError::Search(format!("rm tags: {e}")))?;
-        self.conn.execute("DELETE FROM note_links WHERE source_id = ?1", [&id_str])
+        self.conn
+            .execute("DELETE FROM note_links WHERE source_id = ?1", [&id_str])
             .map_err(|e| AgenticError::Search(format!("rm links: {e}")))?;
         Ok(())
     }
 
     /// List all tags with their note count.
     pub fn tags(&self) -> Result<Vec<(String, usize)>> {
-        let mut stmt = self.conn
+        let mut stmt = self
+            .conn
             .prepare("SELECT tag, COUNT(*) as cnt FROM note_tags GROUP BY tag ORDER BY cnt DESC")
             .map_err(|e| AgenticError::Search(format!("query tags: {e}")))?;
-        let rows = stmt.query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
-        }).map_err(|e| AgenticError::Search(format!("fetch tags: {e}")))?;
+        let rows = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| AgenticError::Search(format!("fetch tags: {e}")))?;
 
         rows.collect::<std::result::Result<Vec<_>, _>>()
             .map_err(|e| AgenticError::Search(format!("collect tags: {e}")))
@@ -93,10 +97,12 @@ impl<'a> Graph<'a> {
 
     /// Get all note IDs with a given tag.
     pub fn notes_by_tag(&self, tag: &str) -> Result<Vec<NoteId>> {
-        let mut stmt = self.conn
+        let mut stmt = self
+            .conn
             .prepare("SELECT note_id FROM note_tags WHERE tag = ?1")
             .map_err(|e| AgenticError::Search(format!("query by tag: {e}")))?;
-        let rows = stmt.query_map([tag], |row| row.get::<_, String>(0))
+        let rows = stmt
+            .query_map([tag], |row| row.get::<_, String>(0))
             .map_err(|e| AgenticError::Search(format!("fetch by tag: {e}")))?;
 
         rows.filter_map(|r| r.ok())
@@ -107,42 +113,51 @@ impl<'a> Graph<'a> {
 
     /// Get incoming links (backlinks) for a note.
     pub fn incoming_links(&self, id: &NoteId) -> Result<Vec<NoteId>> {
-        let mut stmt = self.conn
+        let mut stmt = self
+            .conn
             .prepare("SELECT source_id FROM note_links WHERE target_id = ?1")
             .map_err(|e| AgenticError::Search(format!("query backlinks: {e}")))?;
-        let rows = stmt.query_map([id.to_string()], |row| row.get::<_, String>(0))
+        let rows = stmt
+            .query_map([id.to_string()], |row| row.get::<_, String>(0))
             .map_err(|e| AgenticError::Search(format!("fetch backlinks: {e}")))?;
 
-        Ok(rows.filter_map(|r| r.ok())
+        Ok(rows
+            .filter_map(|r| r.ok())
             .filter_map(|s| NoteId::from_str(&s).ok())
             .collect())
     }
 
     /// Get outgoing links from a note.
     pub fn outgoing_links(&self, id: &NoteId) -> Result<Vec<NoteId>> {
-        let mut stmt = self.conn
+        let mut stmt = self
+            .conn
             .prepare("SELECT target_id FROM note_links WHERE source_id = ?1")
             .map_err(|e| AgenticError::Search(format!("query outlinks: {e}")))?;
-        let rows = stmt.query_map([id.to_string()], |row| row.get::<_, String>(0))
+        let rows = stmt
+            .query_map([id.to_string()], |row| row.get::<_, String>(0))
             .map_err(|e| AgenticError::Search(format!("fetch outlinks: {e}")))?;
 
-        Ok(rows.filter_map(|r| r.ok())
+        Ok(rows
+            .filter_map(|r| r.ok())
             .filter_map(|s| NoteId::from_str(&s).ok())
             .collect())
     }
 
     /// Find orphan notes (no incoming links).
     pub fn orphans(&self) -> Result<Vec<NoteId>> {
-        let mut stmt = self.conn
+        let mut stmt = self
+            .conn
             .prepare(
                 "SELECT DISTINCT nt.note_id FROM note_tags nt
                  WHERE nt.note_id NOT IN (SELECT target_id FROM note_links)",
             )
             .map_err(|e| AgenticError::Search(format!("query orphans: {e}")))?;
-        let rows = stmt.query_map([], |row| row.get::<_, String>(0))
+        let rows = stmt
+            .query_map([], |row| row.get::<_, String>(0))
             .map_err(|e| AgenticError::Search(format!("fetch orphans: {e}")))?;
 
-        Ok(rows.filter_map(|r| r.ok())
+        Ok(rows
+            .filter_map(|r| r.ok())
             .filter_map(|s| NoteId::from_str(&s).ok())
             .collect())
     }
@@ -150,7 +165,9 @@ impl<'a> Graph<'a> {
 
 /// Helper trait to wrap Vec in Ok.
 trait PipeOk {
-    fn pipe_ok(self) -> Result<Self> where Self: Sized;
+    fn pipe_ok(self) -> Result<Self>
+    where
+        Self: Sized;
 }
 
 impl<T> PipeOk for Vec<T> {

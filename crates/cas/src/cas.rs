@@ -1,6 +1,6 @@
-use std::path::{Path, PathBuf};
-use agentic_note_core::Result;
 use crate::blob::BlobStore;
+use agentic_note_core::Result;
+use std::path::{Path, PathBuf};
 
 /// Top-level CAS facade.
 /// All state lives under `{vault}/.agentic/cas/`.
@@ -39,10 +39,14 @@ impl Cas {
         }
         // Generate a simple device ID from hostname + random bytes via hash
         let hostname = std::env::var("HOSTNAME").unwrap_or_else(|_| "unknown".to_string());
-        let seed = format!("{}{}", hostname, std::time::SystemTime::UNIX_EPOCH
-            .elapsed()
-            .map(|d| d.as_nanos())
-            .unwrap_or(0));
+        let seed = format!(
+            "{}{}",
+            hostname,
+            std::time::SystemTime::UNIX_EPOCH
+                .elapsed()
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        );
         let id = crate::hash::hash_bytes(seed.as_bytes())[..16].to_string();
         std::fs::write(&id_path, &id)?;
         Ok(id)

@@ -77,7 +77,9 @@ impl AgentHandler for VaultWriter {
             sources["summary"] = json!("distiller");
         }
 
-        if proposed_frontmatter.as_object().map_or(true, |o| o.is_empty())
+        if proposed_frontmatter
+            .as_object()
+            .is_none_or(|o| o.is_empty())
             && proposed_links.is_empty()
             && proposed_summary.is_none()
         {

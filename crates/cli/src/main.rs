@@ -6,12 +6,16 @@ use clap::Parser;
 use std::path::PathBuf;
 use tracing_subscriber::EnvFilter;
 
-use commands::{Commands, ConfigCmd, McpCmd};
+use commands::{Commands, ConfigCmd, McpCmd, PluginCmd};
 use mcp::McpServer;
 use output::OutputFormat;
 
 #[derive(Parser)]
-#[command(name = "agentic-note", version, about = "Local-first agentic note-taking")]
+#[command(
+    name = "agentic-note",
+    version,
+    about = "Local-first agentic note-taking"
+)]
 struct Cli {
     /// Path to vault (default: AGENTIC_NOTE_VAULT env or cwd)
     #[arg(long, global = true)]
@@ -49,27 +53,32 @@ async fn main() {
         }
     };
 
-    // MCP serve is async — handle separately before the sync block below.
-    if let Commands::Mcp { cmd } = &cli.command {
-        match cmd {
+    let result: anyhow::Result<()> = match cli.command {
+        Commands::Init { path } => commands::init::run(path, fmt),
+
+        Commands::Note { cmd } => commands::note::run(cmd, &vault_path, fmt),
+
+        Commands::Config { cmd } => match cmd {
+            ConfigCmd::Show => commands::config::show(&vault_path, fmt),
+        },
+
+        Commands::Plugin { cmd } => match cmd {
+            PluginCmd::List => commands::plugin::list(&vault_path, fmt),
+        },
+
+        Commands::Device { cmd } => commands::device::run(cmd, &vault_path, fmt),
+
+        Commands::Mcp { cmd } => match cmd {
             McpCmd::Serve => {
                 if let Err(e) = McpServer::new(vault_path).serve_stdio().await {
                     eprintln!("MCP server error: {e}");
                     std::process::exit(1);
                 }
-                return;
+                Ok(())
             }
-        }
-    }
-
-    let result = match cli.command {
-        Commands::Init { path } => commands::init::run(path, fmt),
-        Commands::Note { cmd } => commands::note::run(cmd, &vault_path, fmt),
-        Commands::Config { cmd } => match cmd {
-            ConfigCmd::Show => commands::config::show(&vault_path, fmt),
         },
-        // Already handled above — unreachable but required for exhaustive match.
-        Commands::Mcp { .. } => unreachable!(),
+
+        Commands::Sync { cmd } => commands::sync_cmd::run(cmd, &vault_path, fmt).await,
     };
 
     if let Err(e) = result {

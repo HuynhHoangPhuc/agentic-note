@@ -1,9 +1,15 @@
+pub mod condition;
 pub mod context;
+pub mod dag_executor;
+pub mod error_policy;
 pub mod executor;
+pub mod migration;
 pub mod pipeline;
 pub mod trigger;
 
 pub use context::StageContext;
+pub use dag_executor::DagExecutor;
+pub use error_policy::StageError;
 pub use executor::{AgentHandler, PipelineResult, StageExecutor};
 pub use pipeline::PipelineConfig;
 pub use trigger::{FileEvent, FileEventType, TriggerConfig, TriggerType};
@@ -14,12 +20,11 @@ use std::sync::Arc;
 
 /// Top-level facade for the AgentSpace engine.
 ///
-/// Owns loaded pipeline configs and a `StageExecutor` with registered
-/// agent handlers. Call `run_pipeline` to execute a named pipeline
-/// against a `StageContext`.
+/// Uses `DagExecutor` for v2 pipelines (explicit `depends_on`) and
+/// automatically migrates v1 (sequential) pipelines on first run.
 pub struct AgentSpace {
     pipelines: Vec<PipelineConfig>,
-    executor: StageExecutor,
+    executor: DagExecutor,
     vault_path: PathBuf,
 }
 
@@ -35,7 +40,7 @@ impl AgentSpace {
         );
         Ok(Self {
             pipelines,
-            executor: StageExecutor::new(),
+            executor: DagExecutor::new(),
             vault_path,
         })
     }
@@ -49,11 +54,7 @@ impl AgentSpace {
     ///
     /// Returns `Err` only when the pipeline name is unknown; individual
     /// stage failures are captured in `PipelineResult::skipped`.
-    pub async fn run_pipeline(
-        &self,
-        name: &str,
-        ctx: &mut StageContext,
-    ) -> Result<PipelineResult> {
+    pub async fn run_pipeline(&self, name: &str, ctx: &mut StageContext) -> Result<PipelineResult> {
         let pipeline = self
             .pipelines
             .iter()

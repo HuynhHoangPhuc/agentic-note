@@ -1,7 +1,10 @@
 [package]
 name = "agentic-note-search"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+
+[features]
+embeddings = ["ort", "indicatif", "dirs", "reqwest", "sha2"]
 
 [dependencies]
 agentic-note-core = { workspace = true }
@@ -13,3 +16,10 @@ serde_json = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 walkdir = { workspace = true }
+
+# Embeddings feature deps (optional)
+ort = { workspace = true, optional = true }
+indicatif = { workspace = true, optional = true }
+dirs = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }

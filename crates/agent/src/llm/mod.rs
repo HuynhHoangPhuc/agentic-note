@@ -15,11 +15,17 @@ pub struct Message {
 
 impl Message {
     pub fn user(content: impl Into<String>) -> Self {
-        Self { role: "user".into(), content: content.into() }
+        Self {
+            role: "user".into(),
+            content: content.into(),
+        }
     }
 
     pub fn system(content: impl Into<String>) -> Self {
-        Self { role: "system".into(), content: content.into() }
+        Self {
+            role: "system".into(),
+            content: content.into(),
+        }
     }
 }
 
@@ -66,10 +72,9 @@ impl ProviderRegistry {
 
     /// Get the currently active provider.
     pub fn active(&self) -> Result<Arc<dyn LlmProvider>> {
-        self.providers
-            .get(&self.active)
-            .cloned()
-            .ok_or_else(|| AgenticError::NotFound(format!("LLM provider '{}' not registered", self.active)))
+        self.providers.get(&self.active).cloned().ok_or_else(|| {
+            AgenticError::NotFound(format!("LLM provider '{}' not registered", self.active))
+        })
     }
 
     /// Change the active provider name.

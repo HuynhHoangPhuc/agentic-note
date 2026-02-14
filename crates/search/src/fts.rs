@@ -44,19 +44,26 @@ impl FtsIndex {
             .map_err(|e| AgenticError::Search(format!("tantivy dir: {e}")))?;
 
         let index = if Index::exists(&dir).unwrap_or(false) {
-            Index::open(dir)
-                .map_err(|e| AgenticError::Search(format!("open index: {e}")))?
+            Index::open(dir).map_err(|e| AgenticError::Search(format!("open index: {e}")))?
         } else {
             Index::create(dir, schema.clone(), tantivy::IndexSettings::default())
                 .map_err(|e| AgenticError::Search(format!("create index: {e}")))?
         };
 
-        Ok(Self { index, schema, f_id, f_title, f_body, f_tags })
+        Ok(Self {
+            index,
+            schema,
+            f_id,
+            f_title,
+            f_body,
+            f_tags,
+        })
     }
 
     /// Get an index writer for batch operations.
     pub fn writer(&self) -> Result<IndexWriter> {
-        self.index.writer(HEAP_SIZE)
+        self.index
+            .writer(HEAP_SIZE)
             .map_err(|e| AgenticError::Search(format!("writer: {e}")))
     }
 
@@ -78,8 +85,9 @@ impl FtsIndex {
         doc.add_text(self.f_id, &id_str);
         doc.add_text(self.f_title, title);
         doc.add_text(self.f_body, body);
-        doc.add_text(self.f_tags, &tags.join(" "));
-        writer.add_document(doc)
+        doc.add_text(self.f_tags, tags.join(" "));
+        writer
+            .add_document(doc)
             .map_err(|e| AgenticError::Search(format!("add doc: {e}")))?;
         Ok(())
     }
@@ -92,38 +100,48 @@ impl FtsIndex {
 
     /// Search the index, returning top N results.
     pub fn search(&self, query_str: &str, limit: usize) -> Result<Vec<SearchResult>> {
-        let reader = self.index.reader_builder()
+        let reader = self
+            .index
+            .reader_builder()
             .reload_policy(ReloadPolicy::OnCommitWithDelay)
             .try_into()
             .map_err(|e| AgenticError::Search(format!("reader: {e}")))?;
 
         let searcher = reader.searcher();
-        let query_parser = QueryParser::for_index(
-            &self.index,
-            vec![self.f_title, self.f_body, self.f_tags],
-        );
+        let query_parser =
+            QueryParser::for_index(&self.index, vec![self.f_title, self.f_body, self.f_tags]);
 
-        let query = query_parser.parse_query(query_str)
+        let query = query_parser
+            .parse_query(query_str)
             .map_err(|e| AgenticError::Search(format!("parse query: {e}")))?;
 
-        let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))
+        let top_docs = searcher
+            .search(&query, &TopDocs::with_limit(limit))
             .map_err(|e| AgenticError::Search(format!("search: {e}")))?;
 
         let mut results = Vec::new();
         for (score, doc_addr) in top_docs {
-            let doc: TantivyDocument = searcher.doc(doc_addr)
+            let doc: TantivyDocument = searcher
+                .doc(doc_addr)
                 .map_err(|e| AgenticError::Search(format!("fetch doc: {e}")))?;
 
-            let id_str = doc.get_first(self.f_id)
+            let id_str = doc
+                .get_first(self.f_id)
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
-            let title = doc.get_first(self.f_title)
+            let title = doc
+                .get_first(self.f_title)
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
 
             if let Ok(id) = NoteId::from_str(id_str) {
-                results.push(SearchResult { id, title, score, snippet: String::new() });
+                results.push(SearchResult {
+                    id,
+                    title,
+                    score,
+                    snippet: String::new(),
+                });
             }
         }
         Ok(results)

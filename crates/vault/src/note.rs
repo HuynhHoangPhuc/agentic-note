@@ -55,9 +55,8 @@ impl Note {
 
     /// Read a note from a file path.
     pub fn read(path: &Path) -> Result<Note> {
-        let raw = std::fs::read_to_string(path).map_err(|e| {
-            AgenticError::NotFound(format!("{}: {e}", path.display()))
-        })?;
+        let raw = std::fs::read_to_string(path)
+            .map_err(|e| AgenticError::NotFound(format!("{}: {e}", path.display())))?;
         let (fm, body) = frontmatter::parse(&raw)?;
         Ok(Note {
             id: fm.id,
@@ -78,10 +77,7 @@ impl Note {
     /// Delete a note file.
     pub fn delete(path: &Path) -> Result<()> {
         if !path.exists() {
-            return Err(AgenticError::NotFound(format!(
-                "{}",
-                path.display()
-            )));
+            return Err(AgenticError::NotFound(format!("{}", path.display())));
         }
         std::fs::remove_file(path)?;
         Ok(())

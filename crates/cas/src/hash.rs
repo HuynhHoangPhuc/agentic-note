@@ -1,7 +1,7 @@
-use std::path::Path;
-use sha2::{Digest, Sha256};
 use agentic_note_core::Result;
+use sha2::{Digest, Sha256};
 use std::io::Read;
+use std::path::Path;
 
 /// Hex-encoded SHA-256 digest used as content-addressable object identifier.
 pub type ObjectId = String;
@@ -44,7 +44,10 @@ mod tests {
     fn known_sha256() {
         // echo -n "hello" | sha256sum
         let h = hash_bytes(b"hello");
-        assert_eq!(h, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
+        assert_eq!(
+            h,
+            "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+        );
     }
 
     #[test]

@@ -1,0 +1,22 @@
+[package]
+name = "agentic-note-sync"
+version = "0.2.0"
+edition = "2021"
+
+[dependencies]
+agentic-note-core = { workspace = true }
+agentic-note-cas = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+ed25519-dalek = { workspace = true }
+rand = { workspace = true }
+iroh = { workspace = true }
+dirs = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt"] }

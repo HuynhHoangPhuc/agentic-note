@@ -89,9 +89,7 @@ impl AgentHandler for ZettelkastenLinker {
         let raw = self.llm.chat(&[system, user], &opts).await?;
 
         serde_json::from_str::<Value>(&raw).map_err(|e| {
-            AgenticError::Parse(format!(
-                "zettelkasten-linker bad JSON: {e} — raw: {raw}"
-            ))
+            AgenticError::Parse(format!("zettelkasten-linker bad JSON: {e} — raw: {raw}"))
         })
     }
 }

@@ -25,6 +25,15 @@ pub enum AgenticError {
 
     #[error("Search error: {0}")]
     Search(String),
+
+    #[error("Embedding error: {0}")]
+    Embedding(String),
+
+    #[error("Plugin error: {0}")]
+    Plugin(String),
+
+    #[error("Pipeline error: {0}")]
+    Pipeline(String),
 }
 
 pub type Result<T> = std::result::Result<T, AgenticError>;

@@ -1,8 +1,8 @@
-use std::path::Path;
-use serde::{Deserialize, Serialize};
-use agentic_note_core::Result;
 use crate::blob::BlobStore;
 use crate::hash::ObjectId;
+use agentic_note_core::Result;
+use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]

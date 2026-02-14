@@ -41,11 +41,12 @@ pub fn all_tools() -> Vec<serde_json::Value> {
         }),
         serde_json::json!({
             "name": "note/search",
-            "description": "Full-text search across notes",
+            "description": "Search across notes (full-text, semantic, or hybrid)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
                     "query": { "type": "string", "description": "Search query" },
+                    "mode": { "type": "string", "description": "Search mode: fts (default), semantic, hybrid", "default": "fts" },
                     "limit": { "type": "integer", "description": "Max results (default 10)", "default": 10 }
                 },
                 "required": ["query"]
@@ -64,6 +65,14 @@ pub fn all_tools() -> Vec<serde_json::Value> {
         serde_json::json!({
             "name": "vault/status",
             "description": "Get vault status (note count, path, config)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            }
+        }),
+        serde_json::json!({
+            "name": "plugin/list",
+            "description": "List discovered agent plugins",
             "inputSchema": {
                 "type": "object",
                 "properties": {}

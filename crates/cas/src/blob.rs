@@ -1,6 +1,6 @@
-use std::path::PathBuf;
-use agentic_note_core::{Result, AgenticError};
 use crate::hash::{hash_bytes, ObjectId};
+use agentic_note_core::{AgenticError, Result};
+use std::path::PathBuf;
 use tracing::debug;
 
 /// Content-addressed object store.

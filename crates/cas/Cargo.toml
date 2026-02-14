@@ -1,6 +1,6 @@
 [package]
 name = "agentic-note-cas"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
@@ -8,6 +8,7 @@ agentic-note-core = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_yaml = { workspace = true }
 chrono = { workspace = true }
 walkdir = { workspace = true }
 tracing = { workspace = true }

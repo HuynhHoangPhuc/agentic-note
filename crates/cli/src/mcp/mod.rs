@@ -70,7 +70,10 @@ impl McpServer {
                 return jsonrpc_error(id.as_ref(), -32600, "Invalid Request", "missing method");
             }
         };
-        let params = req.get("params").cloned().unwrap_or(serde_json::Value::Null);
+        let params = req
+            .get("params")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null);
 
         match method {
             "initialize" => self.handle_initialize(id),
@@ -84,11 +87,14 @@ impl McpServer {
     }
 
     fn handle_initialize(&self, id: Option<serde_json::Value>) -> serde_json::Value {
-        jsonrpc_ok(id, serde_json::json!({
-            "protocolVersion": "2024-11-05",
-            "capabilities": { "tools": {} },
-            "serverInfo": { "name": "agentic-note", "version": "0.1.0" }
-        }))
+        jsonrpc_ok(
+            id,
+            serde_json::json!({
+                "protocolVersion": "2024-11-05",
+                "capabilities": { "tools": {} },
+                "serverInfo": { "name": "agentic-note", "version": "0.2.0" }
+            }),
+        )
     }
 
     fn handle_tools_list(&self, id: Option<serde_json::Value>) -> serde_json::Value {
@@ -106,14 +112,21 @@ impl McpServer {
                 return jsonrpc_error(id.as_ref(), -32602, "Invalid params", "missing tool name");
             }
         };
-        let args = params.get("arguments").cloned().unwrap_or(serde_json::Value::Object(Default::default()));
+        let args = params
+            .get("arguments")
+            .cloned()
+            .unwrap_or(serde_json::Value::Object(Default::default()));
 
         match handlers::handle_tool(&tool_name, args, &self.vault_path).await {
             Ok(result) => {
-                let text = serde_json::to_string_pretty(&result).unwrap_or_else(|_| result.to_string());
-                jsonrpc_ok(id, serde_json::json!({
-                    "content": [{ "type": "text", "text": text }]
-                }))
+                let text =
+                    serde_json::to_string_pretty(&result).unwrap_or_else(|_| result.to_string());
+                jsonrpc_ok(
+                    id,
+                    serde_json::json!({
+                        "content": [{ "type": "text", "text": text }]
+                    }),
+                )
             }
             Err(e) => {
                 warn!("tool {tool_name} error: {e}");

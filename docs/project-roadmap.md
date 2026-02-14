@@ -1,16 +1,17 @@
 # Agentic-Note: Project Roadmap & Development Progress
 
-## Current Status: MVP Complete ✅
+## Current Status: v0.2.0 Complete ✅
 
-**Version:** 0.1.0 (MVP)
-**Release Date:** 2026-02-13
-**Test Coverage:** 27/27 tests passing
+**Version:** 0.2.0 (Sync & Plugins)
+**Release Date:** 2026-02-14
+**Test Coverage:** 30+ tests passing
 **Compiler Warnings:** 0
 **Code Quality:** Ready for production use
+**Major Features:** DAG pipelines, P2P sync (iroh), embeddings, plugin system, conflict auto-resolution
 
 ---
 
-## Completed Phases (All 8)
+## Completed Phases (8 MVP + 5 v0.2.0)
 
 ### Phase 01: Project Setup & Core Types ✅
 **Status:** Complete
@@ -18,21 +19,26 @@
 **Completion Date:** 2026-02-13
 
 **Deliverables:**
-- [x] Cargo workspace initialized with 7 crates
+- [x] Cargo workspace initialized with 8 crates (7 MVP + 1 sync)
 - [x] Core types defined: `NoteId`, `ParaCategory`, `NoteStatus`, `FrontMatter`
-- [x] Error handling: `AgenticError` with all variants
+- [x] Error handling: `AgenticError` with all variants (+ Sync)
+- [x] Conflict policies: `ConflictPolicy` enum (NEW in v0.2.0)
+- [x] Error policies: `ErrorPolicy` enum (NEW in v0.2.0)
 - [x] Configuration system: `AppConfig` with TOML parsing
 - [x] ULID-based ID generation: `next_id()` function
-- [x] Workspace dependencies centralized
+- [x] Workspace dependencies: added petgraph, ort, iroh, ed25519-dalek
 
 **Code Files:**
-- `crates/core/src/lib.rs`, `types.rs`, `error.rs`, `config.rs`, `id.rs`
-- `Cargo.toml` (workspace manifest)
+- `crates/core/src/types.rs` (+ ConflictPolicy, ErrorPolicy)
+- `crates/core/src/error.rs` (+ Sync variant)
+- `Cargo.toml` (workspace manifest with 8 crates)
 
 **Key Decisions:**
 - ULID for monotonic ordering (vs UUID)
 - Unified error type across all crates
 - Centralized workspace dependencies for consistency
+- ConflictPolicy enum for auto-resolution (v0.2.0)
+- ErrorPolicy enum for pipeline resilience (v0.2.0)
 
 ---
 
@@ -292,6 +298,190 @@ vault/status   - Get vault statistics
 
 ---
 
+## v0.2.0 Phases (5 new phases: 2026-02-14)
+
+### Phase 09: DAG Pipeline Engine ✅
+**Status:** Complete (v0.2.0)
+**Effort:** 6h / 6h
+**Completion Date:** 2026-02-14
+
+**Deliverables:**
+- [x] DagExecutor with topological sort (petgraph)
+- [x] Parallel stage execution within layers
+- [x] Pipeline schema v2 with depends_on field
+- [x] Conditional stage execution (expression evaluation)
+- [x] Error policies: Retry/Skip/Abort/Fallback
+- [x] Retry logic with exponential backoff
+- [x] Fallback agent chains
+- [x] Backward compatibility with v1 sequential pipelines
+
+**Code Files:**
+- `crates/agent/src/engine/dag_executor.rs` (topological sort + parallel executor)
+- `crates/agent/src/engine/error_policy.rs` (error handling strategies)
+- `crates/agent/src/engine/condition.rs` (condition evaluation)
+- `crates/agent/src/engine/pipeline.rs` (v2 schema)
+- `crates/agent/src/engine/migration.rs` (v1 → v2 migration)
+
+**Key Decisions:**
+- petgraph for dependency DAG
+- Layer-by-layer parallel execution
+- Exponential backoff for retries (2^attempt * base_ms)
+- Expression-based conditions (stage.output.field == "value")
+
+**Testing:**
+- DAG construction and validation
+- Topological sort correctness
+- Parallel execution synchronization
+- Error policy behavior
+- Condition evaluation
+- v1 pipeline compatibility
+
+---
+
+### Phase 10: P2P Sync via iroh ✅
+**Status:** Complete (v0.2.0)
+**Effort:** 8h / 8h
+**Completion Date:** 2026-02-14
+
+**Deliverables:**
+- [x] New crate: agentic-note-sync (700 LOC)
+- [x] Ed25519 device identity generation and persistence
+- [x] Device registry (known peers TOML/JSON)
+- [x] iroh QUIC transport binding
+- [x] SyncTransport trait (abstract)
+- [x] Sync protocol messages
+- [x] Merge driver orchestration
+- [x] Conflict policies (newest-wins, longest-wins, merge-both, manual)
+
+**Code Files:**
+- `crates/sync/src/identity.rs` (Ed25519 keypair + peer ID)
+- `crates/sync/src/device_registry.rs` (known devices persistence)
+- `crates/sync/src/iroh_transport.rs` (QUIC binding)
+- `crates/sync/src/transport.rs` (abstract trait)
+- `crates/sync/src/protocol.rs` (sync messages)
+- `crates/sync/src/merge_driver.rs` (CAS-aware merge)
+- `crates/sync/src/lib.rs` (SyncEngine facade)
+
+**Key Decisions:**
+- Ed25519 for identity (fast, deterministic)
+- iroh for QUIC transport (modern, encrypted by default)
+- Device registry for trusted-peer-only sync
+- Manual conflict policy default (safety over automation)
+
+**Testing:**
+- Identity generation and loading
+- Device registry add/list/remove
+- Sync message serialization
+- Merge outcome validation
+- Conflict policy behavior
+
+---
+
+### Phase 11: Embeddings & Semantic Search ✅
+**Status:** Complete (v0.2.0, optional feature)
+**Effort:** 5h / 5h
+**Completion Date:** 2026-02-14
+
+**Deliverables:**
+- [x] ONNX Runtime integration (all-MiniLM-L6-v2 model)
+- [x] EmbeddingIndex (SQLite-backed vector storage)
+- [x] Semantic search via cosine similarity
+- [x] Hybrid search (FTS + semantic combined scoring)
+- [x] Auto-download model to ~/.cache/agentic-note/models/
+- [x] Optional feature flag: `embeddings`
+- [x] Search mode parameter: fts|semantic|hybrid
+
+**Code Files:**
+- `crates/search/src/embedding.rs` (ONNX integration)
+- `crates/search/src/hybrid.rs` (combined search)
+- `crates/search/src/model_download.rs` (model caching)
+- `crates/search/src/lib.rs` (SearchEngine updates)
+
+**Key Decisions:**
+- Optional behind feature flag (no overhead for users who don't need it)
+- ONNX for cross-platform compatibility
+- all-MiniLM-L6-v2 for semantic embeddings (good quality, 22MB)
+- Hybrid search with weighted combination
+
+**Testing:**
+- Embedding generation correctness
+- Vector similarity computation
+- Hybrid scoring formula
+- Model download and caching
+- Feature flag behavior
+
+---
+
+### Phase 12: Plugin System ✅
+**Status:** Complete (v0.2.0)
+**Effort:** 4h / 4h
+**Completion Date:** 2026-02-14
+
+**Deliverables:**
+- [x] Plugin manifest (plugin.toml) parsing
+- [x] Plugin discovery (auto-scan ~/.agentic/plugins/)
+- [x] Subprocess-based plugin execution
+- [x] JSON-RPC over stdio for plugin communication
+- [x] Plugin timeout configuration
+- [x] Custom agent loading from plugins
+- [x] CLI commands: plugin list, plugin run
+
+**Code Files:**
+- `crates/agent/src/plugin/manifest.rs` (plugin.toml schema)
+- `crates/agent/src/plugin/discovery.rs` (plugin finding)
+- `crates/agent/src/plugin/runner.rs` (subprocess execution)
+- `crates/agent/src/plugin/mod.rs` (plugin trait)
+- `crates/cli/src/commands/plugin.rs` (CLI commands)
+
+**Key Decisions:**
+- Manifest-driven (simple, declarative)
+- Subprocess isolation (each plugin in separate process)
+- JSON-RPC over stdio (no port management)
+- Timeout configuration per-plugin (default 30s)
+
+**Testing:**
+- Manifest parsing
+- Plugin discovery
+- Subprocess execution
+- JSON-RPC communication
+- Timeout behavior
+
+---
+
+### Phase 13: CLI & Device Commands ✅
+**Status:** Complete (v0.2.0)
+**Effort:** 3h / 3h
+**Completion Date:** 2026-02-14
+
+**Deliverables:**
+- [x] New CLI commands: device init/show/pair/list/unpair
+- [x] New CLI commands: sync now/status
+- [x] Plugin management commands
+- [x] Search mode parameter (fts/semantic/hybrid)
+- [x] Conflict policy parameter for sync
+- [x] MCP tool additions (plugin/list)
+- [x] Output formatting for device/sync commands
+
+**Code Files:**
+- `crates/cli/src/commands/device.rs` (device management)
+- `crates/cli/src/commands/sync_cmd.rs` (sync orchestration)
+- `crates/cli/src/commands/plugin.rs` (plugin management)
+- `crates/cli/src/commands/note.rs` (updated with search modes)
+- `crates/cli/src/main.rs` (command dispatch)
+
+**Key Decisions:**
+- Subcommands for clarity (device init, sync now)
+- Sensible defaults (manual conflict policy, FTS search)
+- JSON output for scripting
+
+**Testing:**
+- CLI argument parsing
+- Device command execution
+- Sync command validation
+- Output formatting
+
+---
+
 ## Test Results Summary
 
 **Total Tests:** 27 ✅
@@ -325,7 +515,7 @@ vault/status   - Get vault statistics
 
 ## Version Roadmap
 
-### Version 0.1.0 (Current - MVP) ✅
+### Version 0.1.0 (MVP) ✅
 **Release Date:** 2026-02-13
 **Status:** Complete and stable
 
@@ -333,11 +523,10 @@ vault/status   - Get vault statistics
 - Local-first note storage with PARA/Zettelkasten organization
 - Full-text search with tantivy
 - Content-addressable storage for versioning
-- AgentSpace pipeline engine with 4 built-in agents
+- Sequential AgentSpace pipeline engine with 4 built-in agents
 - Human-in-the-loop review queue
 - MCP server for AI assistant integration
 - CLI with JSON output mode
-- All 8 development phases complete
 
 **Performance:**
 - Note creation: <50ms
@@ -347,80 +536,114 @@ vault/status   - Get vault statistics
 
 ---
 
-### Version 0.2.0 (Planned)
-**Target Release:** Q3 2026
-**Focus:** P2P Sync & Semantic Search
+### Version 0.2.0 (Current - Sync & Plugins) ✅
+**Release Date:** 2026-02-14
+**Status:** Complete and stable
+**Effort:** ~25h (DAG pipelines, P2P sync, embeddings, plugins)
 
-**Planned Features:**
-- [ ] P2P sync via iroh (when API stabilizes)
-- [ ] Embeddings-based semantic search (all-MiniLM-L6-v2)
-- [ ] DAG pipeline branching (conditional stages)
-- [ ] Pipeline error recovery strategies
-- [ ] Conflict auto-resolution policies
-- [ ] Custom agent plugin system
+**Completed Features:**
+- [x] DAG pipeline execution with parallel stages (petgraph)
+- [x] P2P sync via iroh with Ed25519 device identity
+- [x] Device registry and pairing system
+- [x] Embeddings-based semantic search (ONNX Runtime, all-MiniLM-L6-v2, optional)
+- [x] Hybrid search combining FTS + semantic
+- [x] Pipeline error recovery (retry/skip/abort/fallback)
+- [x] Conflict auto-resolution policies (newest-wins, longest-wins, merge-both, manual)
+- [x] Custom agent plugin system (subprocess-based, JSON manifest)
+- [x] New CLI commands (device init/show/pair/list/unpair, sync now/status)
+- [x] Pipeline v2 schema with depends_on and condition fields
+- [x] Version bump to 0.2.0 across all 8 crates
 
-**Estimated Effort:** 15h
+**New Crates:**
+- agentic-note-sync (700 LOC): iroh transport, device identity, merge orchestration
 
 **Breaking Changes:**
-- Pipeline TOML schema v1 → v2 (DAG support)
-- Review queue schema update (new fields)
+- Pipeline schema v1 (sequential) still supported, v2 (DAG) with new fields
+- CLI: device and sync commands added
+- Search: new mode parameter (fts/semantic/hybrid)
+
+**Performance:**
+- DAG execution: Parallel stages reduce overall pipeline time
+- Embeddings: Model cached in ~/.cache/agentic-note/models/
+- Sync: iroh QUIC transport optimized
 
 ---
 
 ### Version 0.3.0 (Planned)
-**Target Release:** Q4 2026
-**Focus:** Performance & Scalability
+**Target Release:** Q3 2026
+**Focus:** Performance & Scaling
 
 **Planned Features:**
-- [ ] SQLite query optimization (indices)
-- [ ] tantivy incremental snapshot support
-- [ ] Batch LLM requests (reduce API calls)
-- [ ] Background indexing worker
+- [ ] Batch sync (multi-peer simultaneous)
+- [ ] Delta-based sync (compression)
+- [ ] Semantic-aware conflict resolution
 - [ ] Pipeline scheduling (cron-like triggers)
+- [ ] Background indexing worker
 - [ ] Metrics and observability dashboard
 
-**Estimated Effort:** 10h
+**Estimated Effort:** 12h
+
+---
+
+### Version 0.4.0 (Planned)
+**Target Release:** Q4 2026
+**Focus:** Stability & Production Hardening
+
+**Planned Features:**
+- [ ] PostgreSQL optional backend (for deployments >10k notes)
+- [ ] Pipeline scheduling (cron-like triggers)
+- [ ] Batch LLM requests (reduce API calls)
+- [ ] Metrics and observability (prometheus)
+- [ ] End-to-end encryption option
+- [ ] Multi-vault sync support
+
+**Estimated Effort:** 15h
 
 ---
 
 ### Version 1.0.0 (Planned)
-**Target Release:** 2027 Q1
-**Focus:** Stability & Production Readiness
+**Target Release:** 2027 Q2
+**Focus:** API Stability & Maturity
 
 **Planned Features:**
-- [ ] Stable API guarantee (semantic versioning)
-- [ ] PostgreSQL optional backend (for large deployments)
+- [ ] Stable public API guarantee (semantic versioning)
 - [ ] Multi-user vault support
-- [ ] End-to-end encryption option
 - [ ] Mobile companion app (read-only)
 - [ ] Published as crate on crates.io
+- [ ] Community contribution guidelines
+- [ ] Official plugin registry
 
 **Estimated Effort:** 20h+
 
 ---
 
-## Known Issues & Limitations
+## Known Issues & Limitations (v0.2.0)
 
-### Current MVP Limitations
-| Item | Limitation | Workaround |
+### Current Limitations
+| Item | Limitation | Workaround / Plan |
 |------|-----------|-----------|
-| P2P Sync | Not implemented | Local backup to git/iCloud |
-| Pipeline Parallelism | Sequential only | Use multiple independent pipelines |
-| Conflict Resolution | Pick A or B | Manual merge of conflict notes |
-| Model Fallback | Single LLM per stage | Create multiple pipelines per provider |
-| Vault Size | Tested to 10k notes | Partition large vaults by PARA |
-| Import/Export | Not implemented | Manual Markdown copy |
+| Multi-vault sync | Single vault per session | Planned for v0.3 |
+| Sync compression | Uncompressed transfer | Delta-based sync in v0.3 |
+| Plugin security | No sandboxing | Trust plugin authors (v0.4 sandbox) |
+| Semantic merge | Manual policy only | Auto-merge in v0.3+ |
+| Concurrent pipelines | Max 1 at a time | Configurable in v0.3 |
+| Vault size | Tested to 10k notes | PostgreSQL option in v0.4 |
+| Model fallback | No LLM chain | Secondary agent via fallback_agent |
 
-### Performance Considerations
-- **Large result sets:** Search results streamed for memory efficiency
+### Performance Considerations (v0.2.0)
+- **Parallel stages:** DAG execution reduces pipeline latency
+- **Embeddings:** Model lazy-loaded on first semantic search (~50MB download)
+- **Sync transfer:** iroh QUIC optimized, uncompressed (compression in v0.3)
 - **Index corruption:** Reindex command available for repair
-- **Concurrent pipelines:** Max 1 at a time (configurable in v2)
-- **API rate limits:** Manual retry on LLM provider limits
+- **API rate limits:** Manual retry on LLM provider limits (batch requests in v0.3)
 
-### Security Considerations
+### Security Considerations (v0.2.0)
+- **Device identity:** Ed25519 keys in `.agentic/identity.key` (0600 perms)
 - **API keys:** Stored in config.toml with 0600 perms
+- **Sync peers:** Device registry for trusted-only connections
 - **Log exposure:** Use `AGENTIC_LOG` env var to control levels
 - **Ollama:** Local models not exposed over network by default
+- **Plugin code:** No isolation (trust authors, v0.4 will add sandboxing)
 - **Note backups:** Recommend git-based version control
 
 ---

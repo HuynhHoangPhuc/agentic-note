@@ -8,11 +8,7 @@ use crate::fts::FtsIndex;
 use crate::graph::Graph;
 
 /// Reindex entire vault: rebuild FTS and graph from all .md files.
-pub fn reindex_vault(
-    vault_path: &Path,
-    fts: &FtsIndex,
-    graph: &Graph<'_>,
-) -> Result<usize> {
+pub fn reindex_vault(vault_path: &Path, fts: &FtsIndex, graph: &Graph<'_>) -> Result<usize> {
     let mut writer = fts.writer()?;
     let mut count = 0;
 
@@ -27,7 +23,11 @@ pub fn reindex_vault(
             continue;
         }
         // Skip .agentic directory
-        if path.to_str().map(|s| s.contains(".agentic")).unwrap_or(false) {
+        if path
+            .to_str()
+            .map(|s| s.contains(".agentic"))
+            .unwrap_or(false)
+        {
             continue;
         }
 
@@ -56,10 +56,9 @@ pub fn reindex_vault(
         }
     }
 
-    writer.commit()
-        .map_err(|e| agentic_note_core::error::AgenticError::Search(
-            format!("commit: {e}"),
-        ))?;
+    writer
+        .commit()
+        .map_err(|e| agentic_note_core::error::AgenticError::Search(format!("commit: {e}")))?;
 
     info!("reindex complete: {count} notes");
     Ok(count)

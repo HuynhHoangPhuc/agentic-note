@@ -1,10 +1,12 @@
 use agentic_note_core::error::Result;
+use agentic_note_core::types::ErrorPolicy;
 use async_trait::async_trait;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use super::context::StageContext;
+use super::error_policy::{self, StageError};
 use super::pipeline::PipelineConfig;
 
 /// Implement this trait to add a new agent capability to the engine.
@@ -15,11 +17,7 @@ pub trait AgentHandler: Send + Sync {
 
     /// Run this agent on the current context.
     /// Returns a JSON value stored under the stage's `output` key.
-    async fn execute(
-        &self,
-        ctx: &mut StageContext,
-        config: &toml::Value,
-    ) -> Result<Value>;
+    async fn execute(&self, ctx: &mut StageContext, config: &toml::Value) -> Result<Value>;
 }
 
 /// Summary produced after a pipeline finishes.
@@ -32,6 +30,8 @@ pub struct PipelineResult {
     pub skipped: Vec<String>,
     /// Human-readable warnings accumulated during execution.
     pub warnings: Vec<String>,
+    /// Structured error records from policy-driven stage failures.
+    pub errors: Vec<StageError>,
 }
 
 /// Dispatches pipeline stages to registered `AgentHandler` implementations.
@@ -49,13 +49,16 @@ impl StageExecutor {
     /// Register an agent handler. Overwrites any previous handler with
     /// the same `agent_id`.
     pub fn register(&mut self, handler: Arc<dyn AgentHandler>) {
-        self.handlers.insert(handler.agent_id().to_string(), handler);
+        self.handlers
+            .insert(handler.agent_id().to_string(), handler);
     }
 
-    /// Execute all stages in `pipeline` sequentially.
+    /// Execute all stages in `pipeline` sequentially, applying per-stage error policies.
     ///
-    /// Policy: if a stage fails (no handler, or handler returns `Err`),
-    /// log a warning, record the skip, and continue with the next stage.
+    /// - Skip (default): log warning and continue.
+    /// - Retry: exponential backoff up to retry_max; on exhaustion, skip.
+    /// - Abort: first failure stops the pipeline immediately (partial result).
+    /// - Fallback: try fallback_agent; on both failures, skip.
     pub async fn run_pipeline(
         &self,
         pipeline: &PipelineConfig,
@@ -66,8 +69,22 @@ impl StageExecutor {
         let mut outputs: HashMap<String, Value> = HashMap::new();
         let mut skipped: Vec<String> = Vec::new();
         let mut warnings: Vec<String> = Vec::new();
+        let mut errors: Vec<StageError> = Vec::new();
 
         for stage in &pipeline.stages {
+            // Resolve effective error policy: stage-level overrides pipeline default.
+            // If the stage has the default (Skip) but pipeline sets something different,
+            // use the pipeline default.
+            let effective_policy = if stage.on_error == ErrorPolicy::default() {
+                pipeline.default_on_error.clone()
+            } else {
+                stage.on_error.clone()
+            };
+
+            // Build a stage with the effective policy for dispatch.
+            let mut effective_stage = stage.clone();
+            effective_stage.on_error = effective_policy;
+
             match self.handlers.get(&stage.agent) {
                 None => {
                     let msg = format!(
@@ -79,20 +96,41 @@ impl StageExecutor {
                     skipped.push(stage.name.clone());
                 }
                 Some(handler) => {
-                    match handler.execute(ctx, &stage.config).await {
-                        Ok(value) => {
+                    match error_policy::execute_with_policy(
+                        handler.as_ref(),
+                        ctx,
+                        &effective_stage,
+                        &self.handlers,
+                    )
+                    .await
+                    {
+                        Ok(Some(value)) => {
                             ctx.set_output(&stage.output, value.clone());
                             outputs.insert(stage.output.clone(), value);
                             stages_completed += 1;
                         }
-                        Err(e) => {
+                        Ok(None) => {
                             let msg = format!(
-                                "pipeline '{}' stage '{}': agent '{}' failed: {e}",
-                                pipeline.name, stage.name, stage.agent
+                                "pipeline '{}' stage '{}': skipped (policy: {:?})",
+                                pipeline.name, stage.name, effective_stage.on_error
                             );
                             tracing::warn!("{msg}");
                             warnings.push(msg);
                             skipped.push(stage.name.clone());
+                        }
+                        Err(stage_error) => {
+                            // Abort policy: stop immediately.
+                            let msg = format!(
+                                "pipeline '{}' stage '{}': abort triggered: {}",
+                                pipeline.name, stage.name, stage_error.error
+                            );
+                            tracing::warn!("{msg}");
+                            warnings.push(msg);
+                            if errors.len() < 100 {
+                                errors.push(stage_error);
+                            }
+                            skipped.push(stage.name.clone());
+                            break;
                         }
                     }
                 }
@@ -105,6 +143,7 @@ impl StageExecutor {
             outputs,
             skipped,
             warnings,
+            errors,
         })
     }
 }
@@ -133,11 +172,7 @@ mod tests {
         fn agent_id(&self) -> &str {
             "echo"
         }
-        async fn execute(
-            &self,
-            ctx: &mut StageContext,
-            _config: &toml::Value,
-        ) -> Result<Value> {
+        async fn execute(&self, ctx: &mut StageContext, _config: &toml::Value) -> Result<Value> {
             Ok(serde_json::json!({ "echoed": ctx.note_content }))
         }
     }
@@ -149,11 +184,7 @@ mod tests {
         fn agent_id(&self) -> &str {
             "fail"
         }
-        async fn execute(
-            &self,
-            _ctx: &mut StageContext,
-            _config: &toml::Value,
-        ) -> Result<Value> {
+        async fn execute(&self, _ctx: &mut StageContext, _config: &toml::Value) -> Result<Value> {
             Err(AgenticError::Parse("intentional failure".into()))
         }
     }
@@ -163,12 +194,14 @@ mod tests {
             name: "test".into(),
             description: "".into(),
             enabled: true,
+            schema_version: 1,
             trigger: TriggerConfig {
                 trigger_type: TriggerType::Manual,
                 path_filter: None,
                 debounce_ms: 0,
             },
             stages,
+            default_on_error: Default::default(),
         }
     }
 
@@ -202,6 +235,12 @@ mod tests {
             agent: "echo".into(),
             config: toml::Value::Table(Default::default()),
             output: "echo_out".into(),
+            depends_on: vec![],
+            condition: None,
+            on_error: Default::default(),
+            retry_max: 3,
+            retry_backoff_ms: 1000,
+            fallback_agent: None,
         }]);
 
         let mut ctx = make_ctx();
@@ -225,12 +264,24 @@ mod tests {
                 agent: "fail".into(),
                 config: toml::Value::Table(Default::default()),
                 output: "fail_out".into(),
+                depends_on: vec![],
+                condition: None,
+                on_error: Default::default(),
+                retry_max: 3,
+                retry_backoff_ms: 1000,
+                fallback_agent: None,
             },
             StageConfig {
                 name: "will-echo".into(),
                 agent: "echo".into(),
                 config: toml::Value::Table(Default::default()),
                 output: "echo_out".into(),
+                depends_on: vec![],
+                condition: None,
+                on_error: Default::default(),
+                retry_max: 3,
+                retry_backoff_ms: 1000,
+                fallback_agent: None,
             },
         ]);
 
