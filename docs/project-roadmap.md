@@ -1,13 +1,13 @@
 # Agentic-Note: Project Roadmap & Development Progress
 
-## Current Status: v0.3.0 Complete ✅
+## Current Status: v0.5.0 Quality & Polish Complete ✅
 
-**Version:** 0.3.0 (Performance & Scaling)
-**Release Date:** 2026-02-14
-**Test Coverage:** 35+ tests passing
-**Compiler Warnings:** 0
-**Code Quality:** Ready for production use
-**Major Features:** Batch sync, compression, semantic merge, background indexing, scheduling, metrics
+**Version:** 0.5.0 (Quality & Polish)
+**Release Date:** 2026-02-18
+**Test Coverage:** Expanded with property + integration test crates
+**Compiler Warnings:** Existing warning set remains (no new blockers)
+**Code Quality:** Validation commands passing, ready for release prep
+**Major Features:** Double Ratchet forward secrecy, async batch LLM API, expanded tests, CI/release workflows, rustdoc updates, version bump
 
 ---
 
@@ -743,19 +743,38 @@ vault/status   - Get vault statistics
 
 ---
 
-### Version 0.4.0 (Planned)
-**Target Release:** Q2 2026
-**Focus:** Stability & Production Hardening
+### Version 0.4.0 ✅
+**Release Date:** 2026-02-18
+**Status:** Complete and stable
 
-**Planned Features:**
-- [ ] PostgreSQL optional backend (for deployments >10k notes)
-- [ ] Batch LLM requests (reduce API calls)
-- [ ] Prometheus integration (full metrics export)
-- [ ] End-to-end encryption option
-- [ ] Multi-vault sync support
-- [ ] Plugin sandboxing (WebAssembly or containers)
+**Delivered Features:**
+- [x] PostgreSQL optional backend scaffolding/validation
+- [x] Batch LLM request foundations
+- [x] Prometheus metrics integration groundwork
+- [x] End-to-end encryption baseline (pre-forward-secrecy)
+- [x] Stability hardening across crates
 
-**Estimated Effort:** 15h
+---
+
+### Version 0.5.0 ✅
+**Release Date:** 2026-02-18
+**Status:** Complete and validated
+**Focus:** Quality & Polish
+
+**Delivered Features:**
+- [x] Forward secrecy upgrade: Double Ratchet + versioned envelopes
+- [x] Async OpenAI Batch API (`batch-api` feature) with polling/results support
+- [x] Comprehensive testing expansion: proptest + integration test crates
+- [x] CI/CD workflows: CI + release packaging pipelines
+- [x] Rustdoc and docs.rs metadata improvements across crates
+- [x] Edge-case fixes and workspace/crate version bump to `0.5.0`
+
+**Validation:**
+- [x] `cargo check --workspace`
+- [x] `cargo test --workspace`
+- [x] `cargo check -p agentic-note-agent --features batch-api`
+- [x] `cargo doc --no-deps --all-features`
+- [x] `cargo test --doc --workspace`
 
 ---
 

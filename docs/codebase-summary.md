@@ -3,8 +3,8 @@
 ## Quick Reference
 
 **Project:** agentic-note — Local-first agentic note-taking Rust CLI + MCP server
-**Version:** 0.3.0 (Performance & Scaling)
-**Status:** ✅ All 8 crates complete, DAG pipelines, P2P sync, plugin system, embeddings, background indexing, compression, batch sync, semantic merge, scheduling, metrics
+**Version:** 0.5.0 (Quality & Polish)
+**Status:** ✅ All 8 core crates plus test support crates; forward secrecy, async batch API, expanded integration/property tests, CI/release workflows, rustdoc improvements
 **Repository:** `/Users/phuc/Developer/agentic-note`
 **Language:** Rust (Edition 2021)
 **Build:** `cargo build --release`
@@ -17,7 +17,7 @@
 
 ```
 agentic-note/
-├── Cargo.toml                    # Workspace manifest (8 crates)
+├── Cargo.toml                    # Workspace manifest (10 crates incl. test support)
 ├── Cargo.lock                    # Locked dependencies
 ├── README.md                     # Quick start guide
 ├── .gitignore                    # Git exclude patterns
