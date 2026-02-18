@@ -1,0 +1,17 @@
+# Cargo audit configuration
+# See: https://github.com/rustsec/rustsec/tree/main/cargo-audit
+
+[advisories]
+ignore = [
+    # rsa: Marvin Attack timing sidechannel - no patch available.
+    # Transitive dep from sqlx-mysql; not used in timing-sensitive context.
+    "RUSTSEC-2023-0071",
+
+    # wasmtime: unsound shared linear memory API - patched in >=38.0.4.
+    # TODO: upgrade wasmtime from v28 to v38+ (breaking API changes).
+    "RUSTSEC-2025-0118",
+
+    # wasmtime: fd_renumber panic - patched in >=34.0.2.
+    # TODO: upgrade wasmtime from v28 to v38+ (breaking API changes).
+    "RUSTSEC-2025-0046",
+]
