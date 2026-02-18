@@ -7,6 +7,8 @@ use crate::storage::{Row, StorageBackend};
 use async_trait::async_trait;
 use std::collections::HashMap;
 
+use sqlx::Column;
+
 /// PostgreSQL storage backend using sqlx.
 pub struct PostgresBackend {
     pool: sqlx::PgPool,

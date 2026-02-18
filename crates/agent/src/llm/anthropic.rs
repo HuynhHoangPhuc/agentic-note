@@ -21,7 +21,7 @@ impl AnthropicProvider {
                 .timeout(std::time::Duration::from_secs(120))
                 .connect_timeout(std::time::Duration::from_secs(10))
                 .build()
-                .expect("failed to build HTTP client"),
+                .unwrap_or_else(|_| reqwest::Client::new()),
         }
     }
 }

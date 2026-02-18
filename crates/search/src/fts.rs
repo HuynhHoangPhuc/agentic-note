@@ -43,7 +43,10 @@ impl FtsIndex {
         let dir = tantivy::directory::MmapDirectory::open(index_dir)
             .map_err(|e| AgenticError::Search(format!("tantivy dir: {e}")))?;
 
-        let index = if Index::exists(&dir).unwrap_or(false) {
+        let exists = Index::exists(&dir)
+            .map_err(|e| AgenticError::Search(format!("check index exists: {e}")))?;
+
+        let index = if exists {
             Index::open(dir).map_err(|e| AgenticError::Search(format!("open index: {e}")))?
         } else {
             Index::create(dir, schema.clone(), tantivy::IndexSettings::default())
@@ -128,11 +131,11 @@ impl FtsIndex {
             let id_str = doc
                 .get_first(self.f_id)
                 .and_then(|v| v.as_str())
-                .unwrap_or("");
+                .unwrap_or_default();
             let title = doc
                 .get_first(self.f_title)
                 .and_then(|v| v.as_str())
-                .unwrap_or("")
+                .unwrap_or_default()
                 .to_string();
 
             if let Ok(id) = NoteId::from_str(id_str) {

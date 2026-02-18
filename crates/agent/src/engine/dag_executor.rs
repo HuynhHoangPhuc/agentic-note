@@ -87,7 +87,11 @@ impl DagExecutor {
         let mut layers: Vec<Vec<usize>> = vec![vec![]; max_depth + 1];
         for &node in order {
             let d = depth[&node];
-            layers[d].push(*graph.node_weight(node).unwrap());
+            if let Some(weight) = graph.node_weight(node) {
+                layers[d].push(*weight);
+            } else {
+                tracing::warn!(node = node.index(), "missing node weight in DAG");
+            }
         }
         layers
     }
@@ -405,7 +409,10 @@ mod tests {
         ]);
 
         let mut ctx = make_ctx();
-        let result = exec.run_pipeline(&pipeline, &mut ctx).await.unwrap();
+        let result = exec
+            .run_pipeline(&pipeline, &mut ctx)
+            .await
+            .expect("pipeline run succeeds");
         assert_eq!(result.stages_completed, 3);
         assert!(result.skipped.is_empty());
         assert!(ctx.get_output("c_out").is_some());
@@ -415,7 +422,7 @@ mod tests {
     fn cycle_detection_returns_error() {
         // A→B→A is a cycle.
         let stages = vec![stage("a", vec!["b"]), stage("b", vec!["a"])];
-        let err = DagExecutor::build_dag(&stages).unwrap_err();
+        let err = DagExecutor::build_dag(&stages).expect_err("cycle detection error");
         assert!(err.to_string().contains("cycle"));
     }
 
@@ -447,8 +454,10 @@ mod tests {
     fn condition_eval_true_false() {
         let mut outputs = HashMap::new();
         outputs.insert("kw".into(), serde_json::json!({ "status": "ok" }));
-        assert!(condition::evaluate_condition(r#"kw.status == "ok""#, &outputs).unwrap());
-        assert!(!condition::evaluate_condition(r#"kw.status == "bad""#, &outputs).unwrap());
+        assert!(condition::evaluate_condition(r#"kw.status == "ok""#, &outputs)
+            .expect("condition ok"));
+        assert!(!condition::evaluate_condition(r#"kw.status == "bad""#, &outputs)
+            .expect("condition bad"));
     }
 
     #[tokio::test]
@@ -461,7 +470,10 @@ mod tests {
 
         let pipeline = make_pipeline(vec![s]);
         let mut ctx = make_ctx();
-        let result = exec.run_pipeline(&pipeline, &mut ctx).await.unwrap();
+        let result = exec
+            .run_pipeline(&pipeline, &mut ctx)
+            .await
+            .expect("pipeline run succeeds");
         assert_eq!(result.stages_completed, 0);
         assert_eq!(result.skipped, vec!["a"]);
     }

@@ -1,7 +1,11 @@
 [package]
 name = "agentic-note-sync"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 agentic-note-core = { workspace = true }
@@ -23,7 +27,14 @@ x25519-dalek = { workspace = true }
 sha2 = { workspace = true }
 hkdf = { workspace = true }
 toml = { workspace = true }
+ksi-double-ratchet = { workspace = true }
+rusqlite = { workspace = true }
+bincode = { workspace = true }
+rand_core = { workspace = true }
+rand_os = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt"] }
+agentic-note-test-utils = { path = "../test-utils" }
+proptest = { workspace = true }

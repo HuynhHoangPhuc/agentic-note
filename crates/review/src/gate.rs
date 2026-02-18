@@ -60,8 +60,8 @@ mod tests {
     use tempfile::NamedTempFile;
 
     fn temp_queue() -> (ReviewQueue, NamedTempFile) {
-        let f = NamedTempFile::new().unwrap();
-        let q = ReviewQueue::open(f.path()).unwrap();
+        let f = NamedTempFile::new().expect("temp file");
+        let q = ReviewQueue::open(f.path()).expect("open review queue");
         (q, f)
     }
 
@@ -75,12 +75,12 @@ mod tests {
             "classify",
             "note-1",
         )
-        .unwrap();
+        .expect("auto trust gate");
 
         assert_eq!(result.action, GateAction::Apply);
         assert!(result.review_id.is_none());
         // Nothing should be in the queue
-        assert!(q.list(None).unwrap().is_empty());
+        assert!(q.list(None).expect("list reviews").is_empty());
     }
 
     #[test]
@@ -93,11 +93,11 @@ mod tests {
             "distill",
             "note-2",
         )
-        .unwrap();
+        .expect("review trust gate");
 
         assert_eq!(result.action, GateAction::Queued);
-        let rid = result.review_id.unwrap();
-        let item = q.get(&rid).unwrap();
+        let rid = result.review_id.expect("review id");
+        let item = q.get(&rid).expect("get review");
         assert_eq!(item.status, "pending");
         assert_eq!(item.pipeline, "distill");
     }
@@ -112,7 +112,7 @@ mod tests {
             "link",
             "note-3",
         )
-        .unwrap();
+        .expect("manual trust gate");
 
         assert_eq!(result.action, GateAction::Queued);
         assert!(result.review_id.is_some());

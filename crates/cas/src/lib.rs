@@ -1,3 +1,8 @@
+//! Content-addressable storage with SHA-256 hashing, snapshots, and 3-way merge.
+//!
+//! Exposes the `Cas` facade plus tree, snapshot, diff, and merge utilities
+//! for versioning vault contents.
+
 pub mod blob;
 pub mod cas;
 pub mod conflict_policy;

@@ -1,7 +1,11 @@
 [package]
 name = "agentic-note-core"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 postgres = ["sqlx/postgres"]
@@ -18,3 +22,6 @@ async-trait = { workspace = true }
 rusqlite = { workspace = true }
 tokio = { workspace = true }
 sqlx = { workspace = true, optional = true }
+
+[dev-dependencies]
+agentic-note-test-utils = { path = "../test-utils" }

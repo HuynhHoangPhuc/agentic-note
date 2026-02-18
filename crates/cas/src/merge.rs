@@ -39,6 +39,29 @@ pub struct MergeResult {
 /// - If only remote changed → take remote.
 /// - If both changed → apply `policy` (auto-resolve or conflict).
 /// - If neither changed → keep ancestor.
+///
+/// # Errors
+///
+/// Returns an error if any tree or blob cannot be loaded from the CAS.
+///
+/// # Examples
+///
+/// ```no_run
+/// use agentic_note_cas::{Cas, Snapshot, three_way_merge};
+/// use agentic_note_core::types::ConflictPolicy;
+/// # use std::path::Path;
+/// # fn main() -> agentic_note_core::Result<()> {
+/// let cas = Cas::open(Path::new("/path/to/vault"))?;
+/// let snap = Snapshot::create(Path::new("/path/to/vault"), &cas, None)?;
+/// let _merge = three_way_merge(
+///     &cas.blob_store,
+///     &snap.id,
+///     &snap.id,
+///     &snap.id,
+///     &ConflictPolicy::Manual,
+/// )?;
+/// # Ok(()) }
+/// ```
 pub fn three_way_merge(
     store: &BlobStore,
     ancestor: &ObjectId,

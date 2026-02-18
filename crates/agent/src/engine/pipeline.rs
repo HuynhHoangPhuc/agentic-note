@@ -138,10 +138,11 @@ output = "summary"
 
     #[test]
     fn parse_pipeline_toml() {
-        let mut f = NamedTempFile::new().unwrap();
-        f.write_all(SAMPLE_TOML.as_bytes()).unwrap();
+        let mut f = NamedTempFile::new().expect("temp file");
+        f.write_all(SAMPLE_TOML.as_bytes())
+            .expect("write sample toml");
 
-        let cfg = PipelineConfig::load(f.path()).unwrap();
+        let cfg = PipelineConfig::load(f.path()).expect("load pipeline config");
         assert_eq!(cfg.name, "summarise");
         assert!(cfg.enabled);
         assert_eq!(cfg.trigger.trigger_type, TriggerType::FileCreated);
@@ -154,7 +155,8 @@ output = "summary"
 
     #[test]
     fn load_all_returns_empty_for_missing_dir() {
-        let result = PipelineConfig::load_all(Path::new("/nonexistent/dir")).unwrap();
+        let result = PipelineConfig::load_all(Path::new("/nonexistent/dir"))
+            .expect("load_all returns empty for missing dir");
         assert!(result.is_empty());
     }
 }

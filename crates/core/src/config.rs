@@ -8,6 +8,7 @@ use crate::types::{ConflictPolicy, ErrorPolicy};
 /// Top-level application configuration from `.agentic/config.toml`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
+    #[serde(default)]
     pub vault: VaultConfig,
     #[serde(default)]
     pub llm: LlmConfig,
@@ -33,6 +34,7 @@ pub struct AppConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultConfig {
+    #[serde(default = "default_vault_path")]
     pub path: PathBuf,
     #[serde(default = "default_para_folders")]
     pub para_folders: Vec<String>,
@@ -49,12 +51,34 @@ fn default_para_folders() -> Vec<String> {
     ]
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+fn default_vault_path() -> PathBuf {
+    PathBuf::from(".")
+}
+
+impl Default for VaultConfig {
+    fn default() -> Self {
+        Self {
+            path: default_vault_path(),
+            para_folders: default_para_folders(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmConfig {
     #[serde(default = "default_provider")]
     pub default_provider: String,
     #[serde(default)]
     pub providers: HashMap<String, ProviderConfig>,
+}
+
+impl Default for LlmConfig {
+    fn default() -> Self {
+        Self {
+            default_provider: default_provider(),
+            providers: HashMap::new(),
+        }
+    }
 }
 
 fn default_provider() -> String {
@@ -465,7 +489,8 @@ model = "claude-sonnet-4-5-20250929"
 default_trust = "review"
 max_concurrent_pipelines = 2
 "#;
-        let config: AppConfig = toml::from_str(toml_str).unwrap();
+        let config: AppConfig = toml::from_str(toml_str)
+            .expect("deserialize config");
         assert_eq!(config.vault.path, PathBuf::from("/home/user/notes"));
         assert_eq!(config.llm.default_provider, "anthropic");
         assert_eq!(config.agent.max_concurrent_pipelines, 2);
@@ -505,7 +530,8 @@ batch_size = 100
 compression_enabled = false
 compression_level = 6
 "#;
-        let config: AppConfig = toml::from_str(toml_str).unwrap();
+        let config: AppConfig = toml::from_str(toml_str)
+            .expect("deserialize config");
         assert!(config.scheduler.enabled);
         assert_eq!(config.scheduler.watch_debounce_ms, 1000);
         assert!(config.metrics.enabled);
@@ -515,5 +541,40 @@ compression_level = 6
         assert_eq!(config.indexer.batch_size, 100);
         assert!(!config.sync.compression_enabled);
         assert_eq!(config.sync.compression_level, 6);
+    }
+
+    #[test]
+    fn test_empty_config_uses_defaults() {
+        let config: AppConfig = toml::from_str("")
+            .expect("deserialize empty config");
+        assert_eq!(config.vault.path, PathBuf::from("."));
+        assert_eq!(config.vault.para_folders.len(), 6);
+        assert_eq!(config.llm.default_provider, "openai");
+        assert_eq!(config.agent.max_concurrent_pipelines, 1);
+        assert!(config.indexer.background);
+        assert_eq!(config.metrics.prometheus_port, 9091);
+    }
+
+    #[test]
+    fn test_missing_sections_use_defaults() {
+        let toml_str = r#"
+[vault]
+path = "/tmp/vault"
+"#;
+        let config: AppConfig = toml::from_str(toml_str)
+            .expect("deserialize config");
+        assert_eq!(config.vault.path, PathBuf::from("/tmp/vault"));
+        assert_eq!(config.llm.default_provider, "openai");
+        assert_eq!(config.agent.default_trust, TrustLevel::Review);
+        assert!(!config.embeddings.enabled);
+        assert!(!config.plugins.enabled);
+        assert!(!config.scheduler.enabled);
+    }
+
+    #[test]
+    fn test_malformed_toml_returns_error() {
+        let toml_str = "[vault\npath = \"/tmp\"";
+        let result: std::result::Result<AppConfig, toml::de::Error> = toml::from_str(toml_str);
+        assert!(result.is_err());
     }
 }

@@ -27,7 +27,9 @@ impl BlobStore {
             debug!("blob already exists: {}", id);
             return Ok(id);
         }
-        let parent = path.parent().expect("object path has parent");
+        let parent = path.parent().ok_or_else(|| {
+            AgenticError::NotFound("object path missing parent directory".to_string())
+        })?;
         std::fs::create_dir_all(parent)?;
         std::fs::write(&path, data)?;
         debug!("stored blob: {}", id);
@@ -60,22 +62,24 @@ mod tests {
     }
 
     #[test]
-    fn store_and_load_roundtrip() {
+    fn store_and_load_roundtrip() -> Result<()> {
         let store = temp_store();
         let data = b"hello cas";
-        let id = store.store(data).unwrap();
+        let id = store.store(data)?;
         assert_eq!(id.len(), 64);
-        let loaded = store.load(&id).unwrap();
+        let loaded = store.load(&id)?;
         assert_eq!(loaded, data);
+        Ok(())
     }
 
     #[test]
-    fn store_idempotent() {
+    fn store_idempotent() -> Result<()> {
         let store = temp_store();
         let data = b"idempotent";
-        let id1 = store.store(data).unwrap();
-        let id2 = store.store(data).unwrap();
+        let id1 = store.store(data)?;
+        let id2 = store.store(data)?;
         assert_eq!(id1, id2);
+        Ok(())
     }
 
     #[test]

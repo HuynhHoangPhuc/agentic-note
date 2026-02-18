@@ -1,7 +1,11 @@
 [package]
 name = "agentic-note-cli"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [[bin]]
 name = "agentic-note"
@@ -26,3 +30,6 @@ prometheus-client = { workspace = true }
 hyper = { workspace = true }
 http-body-util = { workspace = true }
 hyper-util = { workspace = true }
+
+[dev-dependencies]
+agentic-note-test-utils = { path = "../test-utils" }

@@ -167,8 +167,8 @@ mod tests {
     use tempfile::NamedTempFile;
 
     fn open_temp_queue() -> (ReviewQueue, NamedTempFile) {
-        let f = NamedTempFile::new().unwrap();
-        let q = ReviewQueue::open(f.path()).unwrap();
+        let f = NamedTempFile::new().expect("temp file");
+        let q = ReviewQueue::open(f.path()).expect("open review queue");
         (q, f)
     }
 
@@ -176,15 +176,17 @@ mod tests {
     fn enqueue_list_get_round_trip() {
         let (q, _f) = open_temp_queue();
         let changes = json!({"frontmatter": {"para": "projects"}});
-        let id = q.enqueue("classify", "note-01", changes.clone()).unwrap();
+        let id = q
+            .enqueue("classify", "note-01", changes.clone())
+            .expect("enqueue review");
 
-        let all = q.list(None).unwrap();
+        let all = q.list(None).expect("list reviews");
         assert_eq!(all.len(), 1);
         assert_eq!(all[0].id, id);
         assert_eq!(all[0].status, "pending");
         assert_eq!(all[0].proposed_changes, changes);
 
-        let item = q.get(&id).unwrap();
+        let item = q.get(&id).expect("get review");
         assert_eq!(item.pipeline, "classify");
         assert_eq!(item.note_id, "note-01");
     }
@@ -193,12 +195,14 @@ mod tests {
     fn approve_returns_changes_and_sets_status() {
         let (q, _f) = open_temp_queue();
         let changes = json!({"para": "areas"});
-        let id = q.enqueue("classify", "note-02", changes.clone()).unwrap();
+        let id = q
+            .enqueue("classify", "note-02", changes.clone())
+            .expect("enqueue review");
 
-        let returned = q.approve(&id).unwrap();
+        let returned = q.approve(&id).expect("approve review");
         assert_eq!(returned, changes);
 
-        let item = q.get(&id).unwrap();
+        let item = q.get(&id).expect("get review");
         assert_eq!(item.status, "approved");
         assert!(item.resolved.is_some());
     }
@@ -206,10 +210,12 @@ mod tests {
     #[test]
     fn reject_sets_status_and_double_reject_errors() {
         let (q, _f) = open_temp_queue();
-        let id = q.enqueue("classify", "note-03", json!({})).unwrap();
-        q.reject(&id).unwrap();
+        let id = q
+            .enqueue("classify", "note-03", json!({}))
+            .expect("enqueue review");
+        q.reject(&id).expect("reject review");
 
-        let item = q.get(&id).unwrap();
+        let item = q.get(&id).expect("get review");
         assert_eq!(item.status, "rejected");
 
         // Double reject should fail

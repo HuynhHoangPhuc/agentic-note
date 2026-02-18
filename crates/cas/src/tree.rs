@@ -92,33 +92,35 @@ mod tests {
     use std::fs;
 
     #[test]
-    fn from_dir_builds_deterministic_tree() {
+    fn from_dir_builds_deterministic_tree() -> Result<()> {
         let base = env::temp_dir().join(format!("cas-tree-test-{}", std::process::id()));
-        fs::create_dir_all(base.join("sub")).unwrap();
-        fs::write(base.join("a.md"), b"note a").unwrap();
-        fs::write(base.join("sub/b.md"), b"note b").unwrap();
+        fs::create_dir_all(base.join("sub"))?;
+        fs::write(base.join("a.md"), b"note a")?;
+        fs::write(base.join("sub/b.md"), b"note b")?;
 
         let store_dir = base.join("objects");
         let store = BlobStore::new(store_dir);
 
-        let (tree, id1) = Tree::from_dir(&base, &store, &["objects"]).unwrap();
-        let (_, id2) = Tree::from_dir(&base, &store, &["objects"]).unwrap();
+        let (tree, id1) = Tree::from_dir(&base, &store, &["objects"])?;
+        let (_, id2) = Tree::from_dir(&base, &store, &["objects"])?;
 
         assert_eq!(id1, id2, "tree id must be deterministic");
         assert_eq!(tree.entries.len(), 2); // a.md, sub
+        Ok(())
     }
 
     #[test]
-    fn tree_load_roundtrip() {
+    fn tree_load_roundtrip() -> Result<()> {
         let base = env::temp_dir().join(format!("cas-tree-rt-{}", std::process::id()));
-        fs::create_dir_all(&base).unwrap();
-        fs::write(base.join("note.md"), b"content").unwrap();
+        fs::create_dir_all(&base)?;
+        fs::write(base.join("note.md"), b"content")?;
 
         let store = BlobStore::new(base.join("objects"));
-        let (original, id) = Tree::from_dir(&base, &store, &["objects"]).unwrap();
-        let loaded = Tree::load(&store, &id).unwrap();
+        let (original, id) = Tree::from_dir(&base, &store, &["objects"])?;
+        let loaded = Tree::load(&store, &id)?;
 
         assert_eq!(original.entries.len(), loaded.entries.len());
         assert_eq!(original.entries[0].name, loaded.entries[0].name);
+        Ok(())
     }
 }

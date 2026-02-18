@@ -158,18 +158,18 @@ mod tests {
 
     #[test]
     fn register_and_list() {
-        let tmp = TempDir::new().unwrap();
+        let tmp = TempDir::new().expect("temp dir");
         let mut reg = registry_in(&tmp);
         reg.register(PathBuf::from("/tmp/vault1"), "v1".into())
-            .unwrap();
+            .expect("register vault1");
         reg.register(PathBuf::from("/tmp/vault2"), "v2".into())
-            .unwrap();
+            .expect("register vault2");
         assert_eq!(reg.list().len(), 2);
     }
 
     #[test]
     fn save_and_reload() {
-        let tmp = TempDir::new().unwrap();
+        let tmp = TempDir::new().expect("temp dir");
         let manifest_path = tmp.path().join("vaults.toml");
 
         let mut reg = VaultRegistry {
@@ -177,24 +177,25 @@ mod tests {
             manifest_path: manifest_path.clone(),
         };
         reg.register(PathBuf::from("/tmp/vault1"), "v1".into())
-            .unwrap();
-        reg.save().unwrap();
+            .expect("register vault1");
+        reg.save().expect("save registry");
 
-        let content = std::fs::read_to_string(&manifest_path).unwrap();
-        let loaded: VaultManifest = toml::from_str(&content).unwrap();
+        let content = std::fs::read_to_string(&manifest_path).expect("read manifest");
+        let loaded: VaultManifest = toml::from_str(&content)
+            .expect("parse manifest");
         assert_eq!(loaded.vaults.len(), 1);
         assert_eq!(loaded.vaults[0].name, "v1");
     }
 
     #[test]
     fn sync_enabled_filter() {
-        let tmp = TempDir::new().unwrap();
+        let tmp = TempDir::new().expect("temp dir");
         let mut reg = registry_in(&tmp);
         reg.register(PathBuf::from("/tmp/vault1"), "v1".into())
-            .unwrap();
+            .expect("register vault1");
         reg.manifest.vaults[0].sync_enabled = false;
         reg.register(PathBuf::from("/tmp/vault2"), "v2".into())
-            .unwrap();
+            .expect("register vault2");
         assert_eq!(reg.sync_enabled().len(), 1);
         assert_eq!(reg.sync_enabled()[0].name, "v2");
     }

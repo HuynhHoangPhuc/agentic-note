@@ -1,18 +1,23 @@
-/// Sync crate: P2P sync via iroh, device identity, and merge orchestration.
+//! P2P sync via iroh QUIC, device identity, E2EE with Double Ratchet.
+//!
+//! Exposes `SyncEngine` for vault synchronization and helpers for
+//! device registry, session storage, and encryption envelopes.
 pub mod batch_sync;
 pub mod compression;
 pub mod device_registry;
+pub mod double_ratchet;
 pub mod encryption;
 pub mod identity;
 pub mod iroh_transport;
 pub mod merge_driver;
 pub mod protocol;
+pub mod session_store;
 pub mod transport;
 pub mod vault_registry;
 
 pub use batch_sync::{BatchSyncResult, PeerSyncOutcome, PeerSyncStatus};
 pub use device_registry::{DeviceRegistry, KnownDevice};
-pub use encryption::EncryptedPayload;
+pub use encryption::{EncryptedEnvelope, EncryptedPayload, EnvelopeVersion};
 pub use identity::DeviceIdentity;
 pub use iroh_transport::IrohTransport;
 pub use merge_driver::MergeOutcome;

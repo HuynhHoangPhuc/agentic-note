@@ -45,12 +45,11 @@ fn download_file(url: &str, dest: &Path) -> Result<()> {
     let total = response.content_length().unwrap_or(0);
 
     let pb = ProgressBar::new(total);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template("{msg} [{bar:40}] {bytes}/{total_bytes} ({eta})")
-            .unwrap()
-            .progress_chars("=> "),
-    );
+    let style = ProgressStyle::default_bar()
+        .template("{msg} [{bar:40}] {bytes}/{total_bytes} ({eta})")
+        .map_err(|e| AgenticError::Embedding(format!("progress style: {e}")))?
+        .progress_chars("=> ");
+    pb.set_style(style);
     pb.set_message(
         dest.file_name()
             .unwrap_or_default()

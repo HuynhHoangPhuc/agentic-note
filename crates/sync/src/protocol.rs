@@ -436,14 +436,14 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn initiator_sends_sync_request_first() {
-        let dir = tempfile::TempDir::new().unwrap();
+    async fn initiator_sends_sync_request_first() -> Result<()> {
+        let dir = tempfile::TempDir::new().map_err(AgenticError::Io)?;
         let vault = dir.path();
-        std::fs::create_dir_all(vault.join(".agentic")).unwrap();
-        let cas = Cas::open(vault).unwrap();
+        std::fs::create_dir_all(vault.join(".agentic"))?;
+        let cas = Cas::open(vault)?;
 
         // Create a real local snapshot first
-        let local_snap = Snapshot::create(vault, &cas, Some("test-pre".into())).unwrap();
+        let local_snap = Snapshot::create(vault, &cas, Some("test-pre".into()))?;
         // Use the same snapshot as "remote" so merge trivially succeeds (same tree)
         let remote_snap_id = local_snap.id.clone();
 
@@ -459,12 +459,11 @@ mod tests {
             },
         ]);
 
-        let result = run_sync_initiator(&mut mock, &cas, vault, &ConflictPolicy::NewestWins)
-            .await
-            .unwrap();
+        let result = run_sync_initiator(&mut mock, &cas, vault, &ConflictPolicy::NewestWins).await?;
 
         // First message sent by initiator should be SyncRequest
         assert!(matches!(mock.send_buf[0], SyncMessage::SyncRequest { .. }));
         assert!(!result.snapshot_id.is_empty());
+        Ok(())
     }
 }

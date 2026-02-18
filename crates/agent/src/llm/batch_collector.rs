@@ -159,10 +159,10 @@ mod tests {
     use super::*;
     use tempfile::NamedTempFile;
 
-    fn make_cache() -> (LlmCache, NamedTempFile) {
-        let f = NamedTempFile::new().unwrap();
-        let c = LlmCache::new(f.path()).unwrap();
-        (c, f)
+    fn make_cache() -> Result<(LlmCache, NamedTempFile)> {
+        let f = NamedTempFile::new().map_err(|e| AgenticError::Io(e))?;
+        let c = LlmCache::new(f.path())?;
+        Ok((c, f))
     }
 
     fn user_msg(s: &str) -> Message {
@@ -192,7 +192,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_flush_uses_cache() {
+    async fn test_flush_uses_cache() -> Result<()> {
         use std::sync::atomic::{AtomicUsize, Ordering};
 
         // Provider that counts calls.
@@ -208,21 +208,22 @@ mod tests {
             }
         }
 
-        let (cache, _f) = make_cache();
+        let (cache, _f) = make_cache()?;
         let counter = Arc::new(AtomicUsize::new(0));
         let provider: Arc<dyn LlmProvider> = Arc::new(CountingProvider(counter.clone()));
 
         // Pre-populate cache for key matching opts=default, model="".
         let key = LlmCache::compute_key("", r#"[{"content":"cached","role":"user"}]"#, &opts_to_json(&ChatOpts::default()));
-        cache.put(&key, "cached-response", "").unwrap();
+        cache.put(&key, "cached-response", "")?;
 
         let mut bc = BatchCollector::new();
         let _id_cached = bc.add(vec![user_msg("cached")], ChatOpts::default());
         let _id_fresh  = bc.add(vec![user_msg("fresh")], ChatOpts::default());
 
-        let results = bc.flush(provider, &cache).await.unwrap();
+        let results = bc.flush(provider, &cache).await?;
         assert_eq!(results.len(), 2);
         // Only 1 network call — the cached request was served from cache.
         assert_eq!(counter.load(Ordering::SeqCst), 1);
+        Ok(())
     }
 }

@@ -13,6 +13,11 @@ pub struct Cas {
 impl Cas {
     /// Open (or initialise) a CAS instance rooted at `vault_path`.
     /// Creates `.agentic/cas/objects/` and `.agentic/cas/snapshots/` if absent.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the CAS directories cannot be created or the device
+    /// ID cannot be persisted.
     pub fn open(vault_path: &Path) -> Result<Self> {
         let cas_dir = vault_path.join(".agentic").join("cas");
         let objects_dir = cas_dir.join("objects");

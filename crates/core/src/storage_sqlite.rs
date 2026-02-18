@@ -133,13 +133,13 @@ mod tests {
 
     #[tokio::test]
     async fn sqlite_backend_basic_operations() {
-        let backend = SqliteBackend::open_in_memory().unwrap();
+        let backend = SqliteBackend::open_in_memory().expect("open sqlite memory");
         backend
             .execute_batch(
                 "CREATE TABLE test (id TEXT PRIMARY KEY, value TEXT);",
             )
             .await
-            .unwrap();
+            .expect("create table");
 
         backend
             .execute(
@@ -147,12 +147,12 @@ mod tests {
                 &["k1", "v1"],
             )
             .await
-            .unwrap();
+            .expect("insert row");
 
         let rows = backend
             .query_rows("SELECT id, value FROM test WHERE id = ?1", &["k1"])
             .await
-            .unwrap();
+            .expect("query rows");
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].get("id"), Some("k1"));
         assert_eq!(rows[0].get("value"), Some("v1"));
@@ -160,7 +160,7 @@ mod tests {
         let row = backend
             .query_one("SELECT id, value FROM test WHERE id = ?1", &["k1"])
             .await
-            .unwrap();
+            .expect("query one");
         assert_eq!(row.get("value"), Some("v1"));
     }
 }

@@ -15,11 +15,21 @@ pub enum SyncMessage {
     /// `sender_pubkey` is the sender's X25519 public key (32 bytes).
     EncryptedNote {
         sender_pubkey: [u8; 32],
-        payload: crate::encryption::EncryptedPayload,
+        payload: crate::encryption::EncryptedEnvelope,
     },
     /// Advertise X25519 encryption capability during handshake.
     EncryptionSupported {
         x25519_pubkey: [u8; 32],
+    },
+    /// Initiate X3DH handshake for Double Ratchet sessions.
+    X3DHInit {
+        sender_pubkey: [u8; 32],
+        prekey: [u8; 32],
+    },
+    /// Respond to X3DH handshake with derived root key.
+    X3DHResponse {
+        sender_pubkey: [u8; 32],
+        root_key: [u8; 32],
     },
 }
 

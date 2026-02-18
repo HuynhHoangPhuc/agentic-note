@@ -13,6 +13,15 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256, Sha512};
 use x25519_dalek::{PublicKey, StaticSecret};
 
+use crate::double_ratchet::{dr_decrypt, dr_encrypt, DrPayload, DrSession};
+
+/// Envelope version for encrypted payloads.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub enum EnvelopeVersion {
+    Legacy = 0x01,
+    DoubleRatchet = 0x02,
+}
+
 /// An encrypted message payload holding nonce + ciphertext.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedPayload {
@@ -20,6 +29,13 @@ pub struct EncryptedPayload {
     pub nonce: [u8; 12],
     /// Ciphertext produced by ChaCha20-Poly1305 (includes 16-byte auth tag).
     pub ciphertext: Vec<u8>,
+}
+
+/// Versioned envelope for encrypted payloads.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EncryptedEnvelope {
+    pub version: u8,
+    pub payload: Vec<u8>,
 }
 
 /// Derive a deterministic X25519 StaticSecret from raw Ed25519 signing key bytes.
@@ -42,8 +58,9 @@ pub fn derive_shared_secret(my_secret: &StaticSecret, peer_public: &PublicKey) -
     let dh_output = my_secret.diffie_hellman(peer_public);
     let hk = Hkdf::<Sha256>::new(None, dh_output.as_bytes());
     let mut okm = [0u8; 32];
-    hk.expand(b"agentic-note-sync-v1", &mut okm)
-        .expect("32 bytes is valid HKDF-SHA256 output length");
+    if hk.expand(b"agentic-note-sync-v1", &mut okm).is_err() {
+        return [0u8; 32];
+    }
     okm
 }
 
@@ -51,7 +68,7 @@ pub fn derive_shared_secret(my_secret: &StaticSecret, peer_public: &PublicKey) -
 ///
 /// Generates a random 12-byte nonce. The returned [`EncryptedPayload`] carries
 /// the nonce alongside the ciphertext so the receiver can decrypt.
-pub fn encrypt_note(shared_key: &[u8; 32], plaintext: &[u8]) -> Result<EncryptedPayload> {
+fn legacy_encrypt(shared_key: &[u8; 32], plaintext: &[u8]) -> Result<EncryptedPayload> {
     let cipher = ChaCha20Poly1305::new(shared_key.into());
 
     let mut nonce_bytes = [0u8; 12];
@@ -68,14 +85,76 @@ pub fn encrypt_note(shared_key: &[u8; 32], plaintext: &[u8]) -> Result<Encrypted
     })
 }
 
-/// Decrypt an [`EncryptedPayload`] with ChaCha20-Poly1305 using `shared_key`.
-pub fn decrypt_note(shared_key: &[u8; 32], payload: &EncryptedPayload) -> Result<Vec<u8>> {
+fn legacy_decrypt(shared_key: &[u8; 32], payload: &EncryptedPayload) -> Result<Vec<u8>> {
     let cipher = ChaCha20Poly1305::new(shared_key.into());
     let nonce = chacha20poly1305::Nonce::from(payload.nonce);
 
     cipher
         .decrypt(&nonce, payload.ciphertext.as_ref())
         .map_err(|e| AgenticError::Encryption(format!("decrypt failed: {e}")))
+}
+
+/// Encrypt plaintext using selected envelope version.
+///
+/// `associated_data` should include any stable context (peer IDs, session ID, etc.)
+/// and is authenticated by the Double Ratchet cipher.
+pub fn encrypt_envelope(
+    version: EnvelopeVersion,
+    shared_key: &[u8; 32],
+    dr_session: Option<&mut DrSession>,
+    plaintext: &[u8],
+    associated_data: &[u8],
+) -> Result<EncryptedEnvelope> {
+    match version {
+        EnvelopeVersion::Legacy => {
+            let payload = legacy_encrypt(shared_key, plaintext)?;
+            let bytes = bincode::serialize(&payload)
+                .map_err(|e| AgenticError::Encryption(format!("encode legacy payload: {e}")))?;
+            Ok(EncryptedEnvelope {
+                version: EnvelopeVersion::Legacy as u8,
+                payload: bytes,
+            })
+        }
+        EnvelopeVersion::DoubleRatchet => {
+            let session = dr_session.ok_or_else(|| {
+                AgenticError::Encryption("missing double ratchet session".into())
+            })?;
+            let payload = dr_encrypt(session, plaintext, associated_data)?;
+            let bytes = bincode::serialize(&payload)
+                .map_err(|e| AgenticError::Encryption(format!("encode dr payload: {e}")))?;
+            Ok(EncryptedEnvelope {
+                version: EnvelopeVersion::DoubleRatchet as u8,
+                payload: bytes,
+            })
+        }
+    }
+}
+
+/// Decrypt a versioned envelope to plaintext.
+pub fn decrypt_envelope(
+    shared_key: &[u8; 32],
+    dr_session: Option<&mut DrSession>,
+    envelope: &EncryptedEnvelope,
+    associated_data: &[u8],
+) -> Result<Vec<u8>> {
+    match envelope.version {
+        v if v == EnvelopeVersion::Legacy as u8 => {
+            let payload: EncryptedPayload = bincode::deserialize(&envelope.payload)
+                .map_err(|e| AgenticError::Encryption(format!("decode legacy payload: {e}")))?;
+            legacy_decrypt(shared_key, &payload)
+        }
+        v if v == EnvelopeVersion::DoubleRatchet as u8 => {
+            let payload: DrPayload = bincode::deserialize(&envelope.payload)
+                .map_err(|e| AgenticError::Encryption(format!("decode dr payload: {e}")))?;
+            let session = dr_session.ok_or_else(|| {
+                AgenticError::Encryption("missing double ratchet session".into())
+            })?;
+            dr_decrypt(session, &payload, associated_data)
+        }
+        other => Err(AgenticError::Encryption(format!(
+            "unsupported envelope version: {other}"
+        ))),
+    }
 }
 
 #[cfg(test)]
@@ -107,8 +186,8 @@ mod tests {
         let key = test_shared_key();
         let plaintext = b"Hello, encrypted world!";
 
-        let payload = encrypt_note(&key, plaintext).expect("encrypt must succeed");
-        let decrypted = decrypt_note(&key, &payload).expect("decrypt must succeed");
+        let payload = legacy_encrypt(&key, plaintext).expect("encrypt must succeed");
+        let decrypted = legacy_decrypt(&key, &payload).expect("decrypt must succeed");
 
         assert_eq!(decrypted, plaintext);
     }
@@ -118,8 +197,8 @@ mod tests {
         let key = test_shared_key();
         let plaintext = b"same plaintext";
 
-        let p1 = encrypt_note(&key, plaintext).unwrap();
-        let p2 = encrypt_note(&key, plaintext).unwrap();
+        let p1 = legacy_encrypt(&key, plaintext).expect("encrypt payload 1");
+        let p2 = legacy_encrypt(&key, plaintext).expect("encrypt payload 2");
 
         // Random nonces should (with overwhelming probability) differ.
         assert_ne!(p1.nonce, p2.nonce);
@@ -143,9 +222,64 @@ mod tests {
         let wrong_key = [0u8; 32];
         let plaintext = b"secret message";
 
-        let payload = encrypt_note(&key, plaintext).unwrap();
-        let result = decrypt_note(&wrong_key, &payload);
+        let payload = legacy_encrypt(&key, plaintext).expect("encrypt payload");
+        let result = legacy_decrypt(&wrong_key, &payload);
 
         assert!(result.is_err(), "decryption with wrong key should fail");
+    }
+
+    #[test]
+    fn legacy_envelope_round_trip() {
+        let key = test_shared_key();
+        let plaintext = b"legacy payload";
+
+        let envelope = encrypt_envelope(
+            EnvelopeVersion::Legacy,
+            &key,
+            None,
+            plaintext,
+            b"ad",
+        )
+        .expect("encrypt legacy envelope");
+        let decrypted = decrypt_envelope(&key, None, &envelope, b"ad")
+            .expect("decrypt legacy envelope");
+
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn dr_envelope_round_trip() {
+        let key = test_shared_key();
+        let (bob_keypair, bob_prekey) =
+            crate::double_ratchet::generate_prekey().expect("generate prekey");
+        let root = crate::double_ratchet::derive_x3dh_root(bob_prekey);
+        let mut alice = crate::double_ratchet::init_x3dh_initiator(root, bob_prekey)
+            .expect("init initiator");
+        let mut bob = crate::double_ratchet::init_x3dh_responder(root, bob_keypair)
+            .expect("init responder");
+
+        let envelope = encrypt_envelope(
+            EnvelopeVersion::DoubleRatchet,
+            &key,
+            Some(&mut alice),
+            b"hello",
+            b"ad",
+        )
+        .expect("encrypt dr envelope");
+        let decrypted = decrypt_envelope(&key, Some(&mut bob), &envelope, b"ad")
+            .expect("decrypt dr envelope");
+
+        assert_eq!(decrypted, b"hello");
+    }
+
+    #[test]
+    fn reject_unknown_envelope_version() {
+        let key = test_shared_key();
+        let envelope = EncryptedEnvelope {
+            version: 0x99,
+            payload: vec![],
+        };
+        let result = decrypt_envelope(&key, None, &envelope, b"ad");
+        assert!(result.is_err());
     }
 }

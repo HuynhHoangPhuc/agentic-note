@@ -277,7 +277,7 @@ mod tests {
         let handlers: HashMap<String, Arc<dyn AgentHandler>> = HashMap::new();
         let result = execute_with_policy(&FailAgent, &mut ctx, &stage, &handlers)
             .await
-            .unwrap();
+            .expect("skip policy result");
         assert!(result.is_none());
     }
 
@@ -288,7 +288,7 @@ mod tests {
         let handlers: HashMap<String, Arc<dyn AgentHandler>> = HashMap::new();
         let result = execute_with_policy(&OkAgent, &mut ctx, &stage, &handlers)
             .await
-            .unwrap();
+            .expect("skip policy success");
         assert!(result.is_some());
     }
 
@@ -301,9 +301,9 @@ mod tests {
         let handlers: HashMap<String, Arc<dyn AgentHandler>> = HashMap::new();
         let result = execute_with_policy(&flaky, &mut ctx, &stage, &handlers)
             .await
-            .unwrap();
-        assert!(result.is_some());
-        assert_eq!(result.unwrap()["attempt"], 2);
+            .expect("retry succeeds");
+        let output = result.expect("retry output");
+        assert_eq!(output["attempt"], 2);
     }
 
     #[tokio::test]
@@ -314,7 +314,7 @@ mod tests {
         let handlers: HashMap<String, Arc<dyn AgentHandler>> = HashMap::new();
         let result = execute_with_policy(&FailAgent, &mut ctx, &stage, &handlers)
             .await
-            .unwrap();
+            .expect("retry exhausted result");
         assert!(result.is_none());
     }
 
@@ -325,7 +325,7 @@ mod tests {
         let handlers: HashMap<String, Arc<dyn AgentHandler>> = HashMap::new();
         let result = execute_with_policy(&FailAgent, &mut ctx, &stage, &handlers).await;
         assert!(result.is_err());
-        let err = result.unwrap_err();
+        let err = result.expect_err("abort policy error");
         assert_eq!(err.stage_name, "test-stage");
         assert_eq!(err.policy_applied, ErrorPolicy::Abort);
         assert_eq!(err.attempts, 1);
@@ -342,9 +342,9 @@ mod tests {
 
         let result = execute_with_policy(&FailAgent, &mut ctx, &stage, &handlers)
             .await
-            .unwrap();
-        assert!(result.is_some());
-        assert_eq!(result.unwrap()["from"], "fallback");
+            .expect("fallback policy result");
+        let output = result.expect("fallback output");
+        assert_eq!(output["from"], "fallback");
     }
 
     #[tokio::test]
@@ -373,7 +373,7 @@ mod tests {
 
         let result = execute_with_policy(&FailAgent, &mut ctx, &stage, &handlers)
             .await
-            .unwrap();
+            .expect("fallback both fail result");
         assert!(result.is_none());
     }
 }

@@ -246,12 +246,19 @@ mod tests {
         }]);
 
         let mut ctx = make_ctx();
-        let result = exec.run_pipeline(&pipeline, &mut ctx).await.unwrap();
+        let result = exec
+            .run_pipeline(&pipeline, &mut ctx)
+            .await
+            .expect("pipeline run succeeds");
 
         assert_eq!(result.stages_completed, 1);
         assert_eq!(result.total, 1);
         assert!(result.skipped.is_empty());
-        assert_eq!(ctx.get_output("echo_out").unwrap()["echoed"], "hello world");
+        assert_eq!(
+            ctx.get_output("echo_out").expect("echo output")
+                ["echoed"],
+            "hello world"
+        );
     }
 
     #[tokio::test]
@@ -288,7 +295,10 @@ mod tests {
         ]);
 
         let mut ctx = make_ctx();
-        let result = exec.run_pipeline(&pipeline, &mut ctx).await.unwrap();
+        let result = exec
+            .run_pipeline(&pipeline, &mut ctx)
+            .await
+            .expect("pipeline run succeeds");
 
         assert_eq!(result.stages_completed, 1);
         assert_eq!(result.total, 2);

@@ -17,6 +17,28 @@ pub struct Note {
 
 impl Note {
     /// Create a new note file in the vault.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the vault directory cannot be created or the note
+    /// cannot be written to disk.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use agentic_note_core::types::ParaCategory;
+    /// use agentic_note_vault::Note;
+    /// # use std::path::Path;
+    /// # fn main() -> agentic_note_core::Result<()> {
+    /// let note = Note::create(
+    ///     Path::new("/path/to/vault"),
+    ///     "My note",
+    ///     ParaCategory::Inbox,
+    ///     "Body",
+    ///     vec!["tag".to_string()],
+    /// )?;
+    /// # Ok(()) }
+    /// ```
     pub fn create(
         vault: &Path,
         title: &str,
@@ -55,6 +77,10 @@ impl Note {
     }
 
     /// Read a note from a file path.
+    ///
+    /// # Errors
+    ///
+    /// Returns `AgenticError::NotFound` if the file does not exist or cannot be read.
     pub fn read(path: &Path) -> Result<Note> {
         metrics::counter!("note_operations_total", "operation" => "read").increment(1);
         let raw = std::fs::read_to_string(path)
@@ -69,6 +95,10 @@ impl Note {
     }
 
     /// Update an existing note: bumps modified timestamp and rewrites file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the note cannot be serialized or written to disk.
     pub fn update(&mut self) -> Result<()> {
         metrics::counter!("note_operations_total", "operation" => "update").increment(1);
         self.frontmatter.modified = Utc::now();
@@ -78,6 +108,10 @@ impl Note {
     }
 
     /// Delete a note file.
+    ///
+    /// # Errors
+    ///
+    /// Returns `AgenticError::NotFound` if the file does not exist.
     pub fn delete(path: &Path) -> Result<()> {
         metrics::counter!("note_operations_total", "operation" => "delete").increment(1);
         if !path.exists() {

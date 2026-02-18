@@ -1,7 +1,11 @@
 [package]
 name = "agentic-note-agent"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 agentic-note-core = { workspace = true }
@@ -24,8 +28,17 @@ futures = { workspace = true }
 rusqlite = { workspace = true }
 chrono = { workspace = true }
 wasmtime = { workspace = true }
+tokio-retry = { workspace = true, optional = true }
+
+[features]
+batch-api = ["async-openai", "tokio-retry"]
+
+[dependencies.async-openai]
+workspace = true
+optional = true
 
 [dev-dependencies]
 tempfile = "3"
 tokio = { workspace = true, features = ["macros", "rt"] }
 chrono = { workspace = true }
+agentic-note-test-utils = { path = "../test-utils" }

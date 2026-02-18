@@ -180,7 +180,9 @@ mod tests {
     fn register_cron_pipeline() {
         let mut scheduler = PipelineScheduler::new();
         let pipeline = make_cron_pipeline("daily-summary", "0 9 * * *");
-        scheduler.register_pipeline(&pipeline).unwrap();
+        scheduler
+            .register_pipeline(&pipeline)
+            .expect("register pipeline");
         assert_eq!(scheduler.list_schedules().len(), 1);
         assert_eq!(scheduler.list_schedules()[0].pipeline_name, "daily-summary");
     }
@@ -189,7 +191,9 @@ mod tests {
     fn register_watch_pipeline() {
         let mut scheduler = PipelineScheduler::new();
         let pipeline = make_watch_pipeline("inbox-watcher", "inbox/");
-        scheduler.register_pipeline(&pipeline).unwrap();
+        scheduler
+            .register_pipeline(&pipeline)
+            .expect("register pipeline");
         assert_eq!(scheduler.list_schedules().len(), 1);
     }
 
@@ -212,7 +216,9 @@ mod tests {
     fn remove_schedule() {
         let mut scheduler = PipelineScheduler::new();
         let pipeline = make_cron_pipeline("temp", "*/5 * * * *");
-        scheduler.register_pipeline(&pipeline).unwrap();
+        scheduler
+            .register_pipeline(&pipeline)
+            .expect("register pipeline");
         assert!(scheduler.remove("temp"));
         assert!(scheduler.list_schedules().is_empty());
     }
@@ -235,7 +241,9 @@ mod tests {
             schema_version: 2,
             default_on_error: Default::default(),
         };
-        scheduler.register_pipeline(&pipeline).unwrap();
+        scheduler
+            .register_pipeline(&pipeline)
+            .expect("register pipeline");
         assert!(scheduler.list_schedules().is_empty());
     }
 }

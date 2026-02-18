@@ -1,3 +1,8 @@
+//! DAG pipeline engine, LLM providers, built-in agents, plugin system.
+//!
+//! Provides the `AgentSpace` facade, pipeline configuration, and LLM provider
+//! abstractions used to execute agent workflows.
+
 pub mod agents;
 pub mod engine;
 pub mod llm;

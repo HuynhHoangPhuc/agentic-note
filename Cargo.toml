@@ -9,7 +9,12 @@ members = [
     "crates/review",
     "crates/cli",
     "crates/sync",
+    "crates/test-utils",
+    "crates/integration-tests",
 ]
+
+[workspace.package]
+version = "0.5.0"
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -42,6 +47,8 @@ iroh = "0.96"
 iroh-blobs = "0.98"
 ed25519-dalek = { version = "2", features = ["serde", "rand_core"] }
 rand = "0.8"
+rand_core = "0.4"
+rand_os = "0.1"
 dirs = "6"
 tempfile = "3"
 zstd = "0.13"
@@ -57,14 +64,20 @@ http-body-util = "0.1"
 hyper-util = { version = "0.1", features = ["tokio"] }
 futures = "0.3"
 hkdf = "0.12"
+bincode = "1"
+ksi-double-ratchet = "0.1"
+async-openai = "0.27"
+tokio-retry = "0.3"
+proptest = "1"
 
-agentic-note-core = { path = "crates/core" }
-agentic-note-vault = { path = "crates/vault" }
-agentic-note-cas = { path = "crates/cas" }
-agentic-note-search = { path = "crates/search" }
-agentic-note-agent = { path = "crates/agent" }
-agentic-note-review = { path = "crates/review" }
-agentic-note-sync = { path = "crates/sync" }
+agentic-note-core = { path = "crates/core", version = "0.5.0" }
+agentic-note-vault = { path = "crates/vault", version = "0.5.0" }
+agentic-note-cas = { path = "crates/cas", version = "0.5.0" }
+agentic-note-search = { path = "crates/search", version = "0.5.0" }
+agentic-note-agent = { path = "crates/agent", version = "0.5.0" }
+agentic-note-review = { path = "crates/review", version = "0.5.0" }
+agentic-note-sync = { path = "crates/sync", version = "0.5.0" }
+agentic-note-cli = { path = "crates/cli", version = "0.5.0" }
 
 [profile.release]
 lto = "thin"

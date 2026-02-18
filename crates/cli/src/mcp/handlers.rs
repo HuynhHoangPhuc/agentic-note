@@ -102,6 +102,13 @@ fn tool_note_search(args: Value, vault_path: &Path) -> anyhow::Result<Value> {
     let limit = args["limit"].as_u64().unwrap_or(10) as usize;
     let mode = args["mode"].as_str().unwrap_or("fts");
 
+    #[cfg(not(feature = "embeddings"))]
+    if matches!(mode, "semantic" | "hybrid") {
+        return Err(anyhow::anyhow!(
+            "{mode} search requires the embeddings feature"
+        ));
+    }
+
     #[allow(unused_mut)]
     let mut engine =
         SearchEngine::open(vault_path).map_err(|e| anyhow::anyhow!("search engine: {e}"))?;

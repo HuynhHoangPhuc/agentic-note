@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use ulid::Generator;
+use ulid::{Generator, Ulid};
 
 use crate::types::NoteId;
 
@@ -7,11 +7,21 @@ static ID_GEN: Mutex<Option<Generator>> = Mutex::new(None);
 
 /// Generate a monotonically ordered NoteId using ULID.
 pub fn next_id() -> NoteId {
-    let mut guard = ID_GEN.lock().expect("ID generator lock poisoned");
+    let mut guard = match ID_GEN.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            tracing::warn!("ID generator lock poisoned; recovering");
+            poisoned.into_inner()
+        }
+    };
     let gen = guard.get_or_insert_with(Generator::new);
-    let ulid = gen
-        .generate()
-        .expect("ULID generation failed (clock overflow)");
+    let ulid = match gen.generate() {
+        Ok(ulid) => ulid,
+        Err(err) => {
+            tracing::error!(error = %err, "ULID generation failed; falling back to new ULID");
+            Ulid::new()
+        }
+    };
     NoteId(ulid)
 }
 

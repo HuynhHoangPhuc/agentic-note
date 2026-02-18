@@ -62,28 +62,32 @@ mod tests {
     }
 
     #[test]
-    fn eq_true() {
+    fn eq_true() -> Result<()> {
         let out = make_outputs();
-        assert!(evaluate_condition(r#"keywords.status == "ok""#, &out).unwrap());
+        assert!(evaluate_condition(r#"keywords.status == "ok""#, &out)?);
+        Ok(())
     }
 
     #[test]
-    fn eq_false() {
+    fn eq_false() -> Result<()> {
         let out = make_outputs();
-        assert!(!evaluate_condition(r#"keywords.status == "fail""#, &out).unwrap());
+        assert!(!evaluate_condition(r#"keywords.status == "fail""#, &out)?);
+        Ok(())
     }
 
     #[test]
-    fn neq_true() {
+    fn neq_true() -> Result<()> {
         let out = make_outputs();
-        assert!(evaluate_condition(r#"keywords.status != "fail""#, &out).unwrap());
+        assert!(evaluate_condition(r#"keywords.status != "fail""#, &out)?);
+        Ok(())
     }
 
     #[test]
-    fn missing_key_is_empty_string() {
+    fn missing_key_is_empty_string() -> Result<()> {
         let out = make_outputs();
         // Missing field treats as "" so != "anything" is true.
-        assert!(evaluate_condition(r#"keywords.missing != "x""#, &out).unwrap());
+        assert!(evaluate_condition(r#"keywords.missing != "x""#, &out)?);
+        Ok(())
     }
 
     #[test]

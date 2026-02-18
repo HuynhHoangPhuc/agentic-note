@@ -164,104 +164,109 @@ mod tests {
     }
 
     #[test]
-    fn newest_wins_picks_later_timestamp() {
+    fn newest_wins_picks_later_timestamp() -> Result<()> {
         let store = temp_store();
         let older = make_note("2024-01-01T00:00:00Z", "old content");
         let newer = make_note("2024-06-01T00:00:00Z", "new content");
-        let id_a = store.store(&older).unwrap();
-        let id_b = store.store(&newer).unwrap();
+        let id_a = store.store(&older)?;
+        let id_b = store.store(&newer)?;
 
         let info = ConflictInfo {
             path: "note.md".into(),
             version_a: id_a,
             version_b: id_b.clone(),
         };
-        let res = resolve_conflict(&store, &info, &ConflictPolicy::NewestWins).unwrap();
+        let res = resolve_conflict(&store, &info, &ConflictPolicy::NewestWins)?;
         match res {
             ConflictResolution::Resolved { merged_blob_id, .. } => {
                 assert_eq!(merged_blob_id, id_b, "newer version_b should win");
             }
             ConflictResolution::Unresolved(_) => panic!("expected resolved"),
         }
+        Ok(())
     }
 
     #[test]
-    fn newest_wins_falls_back_to_version_a_when_no_frontmatter() {
+    fn newest_wins_falls_back_to_version_a_when_no_frontmatter() -> Result<()> {
         let store = temp_store();
-        let id_a = store.store(b"no frontmatter a").unwrap();
-        let id_b = store.store(b"no frontmatter b").unwrap();
+        let id_a = store.store(b"no frontmatter a")?;
+        let id_b = store.store(b"no frontmatter b")?;
 
         let info = ConflictInfo {
             path: "note.md".into(),
             version_a: id_a.clone(),
             version_b: id_b,
         };
-        let res = resolve_conflict(&store, &info, &ConflictPolicy::NewestWins).unwrap();
+        let res = resolve_conflict(&store, &info, &ConflictPolicy::NewestWins)?;
         match res {
             ConflictResolution::Resolved { merged_blob_id, .. } => {
                 assert_eq!(merged_blob_id, id_a, "should fall back to version_a");
             }
             ConflictResolution::Unresolved(_) => panic!("expected resolved"),
         }
+        Ok(())
     }
 
     #[test]
-    fn longest_wins_picks_longer_blob() {
+    fn longest_wins_picks_longer_blob() -> Result<()> {
         let store = temp_store();
         let short = b"short";
         let long = b"this is a much longer content blob";
-        let id_a = store.store(short).unwrap();
-        let id_b = store.store(long).unwrap();
+        let id_a = store.store(short)?;
+        let id_b = store.store(long)?;
 
         let info = ConflictInfo {
             path: "note.md".into(),
             version_a: id_a,
             version_b: id_b.clone(),
         };
-        let res = resolve_conflict(&store, &info, &ConflictPolicy::LongestWins).unwrap();
+        let res = resolve_conflict(&store, &info, &ConflictPolicy::LongestWins)?;
         match res {
             ConflictResolution::Resolved { merged_blob_id, .. } => {
                 assert_eq!(merged_blob_id, id_b, "longer version_b should win");
             }
             ConflictResolution::Unresolved(_) => panic!("expected resolved"),
         }
+        Ok(())
     }
 
     #[test]
-    fn longest_wins_tie_goes_to_version_a() {
+    fn longest_wins_tie_goes_to_version_a() -> Result<()> {
         let store = temp_store();
-        let id_a = store.store(b"same").unwrap();
-        let id_b = store.store(b"also").unwrap(); // same length as "same"
+        let id_a = store.store(b"same")?;
+        let id_b = store.store(b"also")?; // same length as "same"
         let info = ConflictInfo {
             path: "note.md".into(),
             version_a: id_a.clone(),
             version_b: id_b,
         };
-        let res = resolve_conflict(&store, &info, &ConflictPolicy::LongestWins).unwrap();
+        let res = resolve_conflict(&store, &info, &ConflictPolicy::LongestWins)?;
         match res {
             ConflictResolution::Resolved { merged_blob_id, .. } => {
                 assert_eq!(merged_blob_id, id_a, "tie should go to version_a");
             }
             ConflictResolution::Unresolved(_) => panic!("expected resolved"),
         }
+        Ok(())
     }
 
     #[test]
-    fn merge_both_contains_conflict_markers() {
+    fn merge_both_contains_conflict_markers() -> Result<()> {
         let store = temp_store();
-        let id_a = store.store(b"local content").unwrap();
-        let id_b = store.store(b"remote content").unwrap();
+        let id_a = store.store(b"local content")?;
+        let id_b = store.store(b"remote content")?;
 
         let info = ConflictInfo {
             path: "note.md".into(),
             version_a: id_a,
             version_b: id_b,
         };
-        let res = resolve_conflict(&store, &info, &ConflictPolicy::MergeBoth).unwrap();
+        let res = resolve_conflict(&store, &info, &ConflictPolicy::MergeBoth)?;
         match res {
             ConflictResolution::Resolved { merged_blob_id, .. } => {
-                let merged_bytes = store.load(&merged_blob_id).unwrap();
-                let merged_text = String::from_utf8(merged_bytes).unwrap();
+                let merged_bytes = store.load(&merged_blob_id)?;
+                let merged_text = String::from_utf8(merged_bytes)
+                    .map_err(|e| agentic_note_core::AgenticError::Parse(format!("utf8 merged: {e}")))?;
                 assert!(merged_text.contains("<<<< LOCAL"));
                 assert!(merged_text.contains("===="));
                 assert!(merged_text.contains(">>>> REMOTE"));
@@ -270,23 +275,25 @@ mod tests {
             }
             ConflictResolution::Unresolved(_) => panic!("expected resolved"),
         }
+        Ok(())
     }
 
     #[test]
-    fn manual_policy_returns_unresolved() {
+    fn manual_policy_returns_unresolved() -> Result<()> {
         let store = temp_store();
-        let id_a = store.store(b"version a").unwrap();
-        let id_b = store.store(b"version b").unwrap();
+        let id_a = store.store(b"version a")?;
+        let id_b = store.store(b"version b")?;
 
         let info = ConflictInfo {
             path: "note.md".into(),
             version_a: id_a,
             version_b: id_b,
         };
-        let res = resolve_conflict(&store, &info, &ConflictPolicy::Manual).unwrap();
+        let res = resolve_conflict(&store, &info, &ConflictPolicy::Manual)?;
         assert!(
             matches!(res, ConflictResolution::Unresolved(_)),
             "manual policy must return Unresolved"
         );
+        Ok(())
     }
 }

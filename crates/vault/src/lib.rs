@@ -1,3 +1,8 @@
+//! Note CRUD, PARA organization, and YAML frontmatter management.
+//!
+//! Provides the `Vault` interface for note discovery alongside `Note` helpers
+//! for reading and writing Markdown notes with YAML frontmatter.
+
 pub mod frontmatter;
 pub mod init;
 pub mod markdown;

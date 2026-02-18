@@ -80,18 +80,19 @@ mod tests {
     use tempfile::TempDir;
 
     #[test]
-    fn empty_registry_when_file_missing() {
-        let dir = TempDir::new().unwrap();
+    fn empty_registry_when_file_missing() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let path = dir.path().join("devices.json");
-        let reg = DeviceRegistry::load(&path).unwrap();
+        let reg = DeviceRegistry::load(&path)?;
         assert!(reg.list().is_empty());
+        Ok(())
     }
 
     #[test]
-    fn add_and_list_devices() {
-        let dir = TempDir::new().unwrap();
+    fn add_and_list_devices() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let path = dir.path().join("devices.json");
-        let mut reg = DeviceRegistry::load(&path).unwrap();
+        let mut reg = DeviceRegistry::load(&path)?;
 
         reg.add_device("peer-aaa".to_string(), Some("Laptop".to_string()));
         reg.add_device("peer-bbb".to_string(), None);
@@ -99,57 +100,62 @@ mod tests {
         assert_eq!(reg.list()[0].peer_id, "peer-aaa");
         assert_eq!(reg.list()[0].name.as_deref(), Some("Laptop"));
         assert_eq!(reg.list()[1].peer_id, "peer-bbb");
+        Ok(())
     }
 
     #[test]
-    fn add_device_no_duplicate() {
-        let dir = TempDir::new().unwrap();
+    fn add_device_no_duplicate() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let path = dir.path().join("devices.json");
-        let mut reg = DeviceRegistry::load(&path).unwrap();
+        let mut reg = DeviceRegistry::load(&path)?;
 
         reg.add_device("peer-aaa".to_string(), None);
         reg.add_device("peer-aaa".to_string(), Some("Renamed".to_string()));
         assert_eq!(reg.list().len(), 1, "duplicate peer_id must not be added");
+        Ok(())
     }
 
     #[test]
-    fn remove_device() {
-        let dir = TempDir::new().unwrap();
+    fn remove_device() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let path = dir.path().join("devices.json");
-        let mut reg = DeviceRegistry::load(&path).unwrap();
+        let mut reg = DeviceRegistry::load(&path)?;
 
         reg.add_device("peer-aaa".to_string(), None);
         reg.add_device("peer-bbb".to_string(), None);
         reg.remove_device("peer-aaa");
         assert_eq!(reg.list().len(), 1);
         assert_eq!(reg.list()[0].peer_id, "peer-bbb");
+        Ok(())
     }
 
     #[test]
-    fn save_and_load_round_trip() {
-        let dir = TempDir::new().unwrap();
+    fn save_and_load_round_trip() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let path = dir.path().join("devices.json");
 
-        let mut reg = DeviceRegistry::load(&path).unwrap();
+        let mut reg = DeviceRegistry::load(&path)?;
         reg.add_device("peer-ccc".to_string(), Some("Desktop".to_string()));
-        reg.save().unwrap();
+        reg.save()?;
 
-        let loaded = DeviceRegistry::load(&path).unwrap();
+        let loaded = DeviceRegistry::load(&path)?;
         assert_eq!(loaded.list().len(), 1);
         assert_eq!(loaded.list()[0].peer_id, "peer-ccc");
         assert_eq!(loaded.list()[0].name.as_deref(), Some("Desktop"));
+        Ok(())
     }
 
     #[test]
-    fn update_last_sync_sets_timestamp() {
-        let dir = TempDir::new().unwrap();
+    fn update_last_sync_sets_timestamp() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let path = dir.path().join("devices.json");
-        let mut reg = DeviceRegistry::load(&path).unwrap();
+        let mut reg = DeviceRegistry::load(&path)?;
 
         reg.add_device("peer-ddd".to_string(), None);
         assert!(reg.list()[0].last_sync.is_none());
 
         reg.update_last_sync("peer-ddd");
         assert!(reg.list()[0].last_sync.is_some());
+        Ok(())
     }
 }

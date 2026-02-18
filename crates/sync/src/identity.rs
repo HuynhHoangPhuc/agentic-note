@@ -93,48 +93,52 @@ mod tests {
     }
 
     #[test]
-    fn save_and_load_round_trip() {
-        let dir = TempDir::new().unwrap();
+    fn save_and_load_round_trip() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let key_path = dir.path().join("identity.key");
 
         let original = DeviceIdentity::generate();
         let original_peer_id = original.peer_id.clone();
-        original.save(&key_path).unwrap();
+        original.save(&key_path)?;
 
-        let loaded = DeviceIdentity::load(&key_path).unwrap();
+        let loaded = DeviceIdentity::load(&key_path)?;
         assert_eq!(loaded.peer_id, original_peer_id);
         assert_eq!(loaded.secret_key.to_bytes(), original.secret_key.to_bytes());
+        Ok(())
     }
 
     #[test]
-    fn init_or_load_creates_on_first_call() {
-        let dir = TempDir::new().unwrap();
+    fn init_or_load_creates_on_first_call() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let agentic_dir = dir.path();
         let key_path = agentic_dir.join("identity.key");
 
         assert!(!key_path.exists());
-        let identity = DeviceIdentity::init_or_load(agentic_dir).unwrap();
+        let identity = DeviceIdentity::init_or_load(agentic_dir)?;
         assert!(key_path.exists());
         assert!(!identity.peer_id.is_empty());
+        Ok(())
     }
 
     #[test]
-    fn init_or_load_loads_existing() {
-        let dir = TempDir::new().unwrap();
+    fn init_or_load_loads_existing() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let agentic_dir = dir.path();
 
-        let first = DeviceIdentity::init_or_load(agentic_dir).unwrap();
-        let second = DeviceIdentity::init_or_load(agentic_dir).unwrap();
+        let first = DeviceIdentity::init_or_load(agentic_dir)?;
+        let second = DeviceIdentity::init_or_load(agentic_dir)?;
         assert_eq!(first.peer_id, second.peer_id);
+        Ok(())
     }
 
     #[test]
-    fn key_file_has_32_bytes() {
-        let dir = TempDir::new().unwrap();
+    fn key_file_has_32_bytes() -> Result<()> {
+        let dir = TempDir::new().map_err(AgenticError::Io)?;
         let key_path = dir.path().join("identity.key");
         let identity = DeviceIdentity::generate();
-        identity.save(&key_path).unwrap();
-        let bytes = std::fs::read(&key_path).unwrap();
+        identity.save(&key_path)?;
+        let bytes = std::fs::read(&key_path)?;
         assert_eq!(bytes.len(), 32);
+        Ok(())
     }
 }

@@ -35,6 +35,9 @@ pub enum AgenticError {
     #[error("Pipeline error: {0}")]
     Pipeline(String),
 
+    #[error("Batch error: {0}")]
+    Batch(String),
+
     #[error("Metrics error: {0}")]
     Metrics(String),
 

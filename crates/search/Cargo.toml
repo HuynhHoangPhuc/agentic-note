@@ -1,7 +1,11 @@
 [package]
 name = "agentic-note-search"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 embeddings = ["ort", "indicatif", "dirs", "reqwest", "sha2"]
@@ -26,3 +30,6 @@ indicatif = { workspace = true, optional = true }
 dirs = { workspace = true, optional = true }
 reqwest = { workspace = true, optional = true }
 sha2 = { workspace = true, optional = true }
+
+[dev-dependencies]
+agentic-note-test-utils = { path = "../test-utils" }

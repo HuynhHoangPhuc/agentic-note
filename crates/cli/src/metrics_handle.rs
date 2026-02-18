@@ -150,9 +150,17 @@ impl MetricsHandle {
 
     /// Encode all metrics as OpenMetrics text format.
     pub fn encode(&self) -> String {
-        let registry = self.registry.lock().unwrap();
+        let registry = match self.registry.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                tracing::warn!("metrics registry lock poisoned; recovering");
+                poisoned.into_inner()
+            }
+        };
         let mut buf = String::new();
-        encode(&mut buf, &registry).unwrap_or_default();
+        if let Err(err) = encode(&mut buf, &registry) {
+            tracing::warn!(error = %err, "encode metrics failed");
+        }
         buf
     }
 }

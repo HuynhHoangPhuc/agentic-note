@@ -1,3 +1,8 @@
+//! Shared foundation types, error handling, and configuration for agentic-note.
+//!
+//! Re-exports core domain types, configuration structs, and error handling helpers
+//! used by all other crates in the workspace.
+
 pub mod config;
 pub mod error;
 pub mod id;

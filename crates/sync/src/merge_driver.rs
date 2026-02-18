@@ -177,17 +177,18 @@ mod tests {
     use tempfile::TempDir;
 
     fn temp_cas(dir: &Path) -> Cas {
-        Cas::open(dir).unwrap()
+        Cas::open(dir).expect("open cas")
     }
 
     #[test]
     fn merge_empty_vaults_produces_no_conflicts() {
-        let dir = TempDir::new().unwrap();
+        let dir = TempDir::new().expect("temp dir");
         let vault = dir.path();
         let cas = temp_cas(vault);
 
         // Create a snapshot of the empty vault
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, Some("test".into())).unwrap();
+        let snap = agentic_note_cas::Snapshot::create(vault, &cas, Some("test".into()))
+            .expect("create snapshot");
 
         let outcome = merge_after_sync(
             &cas,
@@ -196,7 +197,7 @@ mod tests {
             &snap.id,
             &ConflictPolicy::NewestWins,
         )
-        .unwrap();
+        .expect("merge after sync");
 
         assert_eq!(outcome.conflicts, 0);
         assert_eq!(outcome.conflict_paths, Vec::<String>::new());
@@ -204,29 +205,38 @@ mod tests {
 
     #[test]
     fn merge_identical_snapshots_no_conflict() {
-        let dir = TempDir::new().unwrap();
+        let dir = TempDir::new().expect("temp dir");
         let vault = dir.path();
-        std::fs::write(vault.join("note.md"), b"# Hello").unwrap();
+        std::fs::write(vault.join("note.md"), b"# Hello").expect("write note");
         let cas = temp_cas(vault);
 
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None).unwrap();
+        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None)
+            .expect("create snapshot");
 
-        let outcome =
-            merge_after_sync(&cas, &snap.id, &snap.id, &snap.id, &ConflictPolicy::Manual).unwrap();
+        let outcome = merge_after_sync(
+            &cas,
+            &snap.id,
+            &snap.id,
+            &snap.id,
+            &ConflictPolicy::Manual,
+        )
+        .expect("merge after sync");
 
         assert_eq!(outcome.conflicts, 0);
     }
 
     #[test]
     fn write_conflict_files_creates_directory() {
-        let dir = TempDir::new().unwrap();
+        let dir = TempDir::new().expect("temp dir");
         let vault = dir.path();
         let cas = temp_cas(vault);
 
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None).unwrap();
+        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None)
+            .expect("create snapshot");
         let conflict_paths = vec!["some/note.md".to_string()];
 
-        write_conflict_files(&cas, vault, &conflict_paths, &snap.id, &snap.id).unwrap();
+        write_conflict_files(&cas, vault, &conflict_paths, &snap.id, &snap.id)
+            .expect("write conflict files");
 
         let conflicts_dir = vault.join(".agentic").join("conflicts");
         assert!(conflicts_dir.exists());

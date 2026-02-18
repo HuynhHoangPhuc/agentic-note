@@ -1,3 +1,8 @@
+//! Full-text search (tantivy), graph indexing (SQLite), optional embeddings.
+//!
+//! Use `SearchEngine` to open indexes, perform FTS queries, and manage
+//! backlinks/tags. Embedding-based search is gated behind the `embeddings` feature.
+
 pub mod background_indexer;
 pub mod fts;
 pub mod graph;
@@ -22,6 +27,17 @@ pub use fts::{FtsIndex, SearchResult};
 pub use graph::Graph;
 
 /// SearchEngine facade: combines FTS, graph, and optional embeddings.
+///
+/// # Examples
+///
+/// ```no_run
+/// use agentic_note_search::SearchEngine;
+/// # use std::path::Path;
+/// # fn main() -> agentic_note_core::Result<()> {
+/// let engine = SearchEngine::open(Path::new("/path/to/vault"))?;
+/// let _results = engine.search_fts("query", 10)?;
+/// # Ok(()) }
+/// ```
 pub struct SearchEngine {
     pub fts: FtsIndex,
     db: Connection,
@@ -33,6 +49,10 @@ pub struct SearchEngine {
 
 impl SearchEngine {
     /// Open or create a search engine for the given vault.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the index directory or SQLite database cannot be created.
     pub fn open(vault_path: &Path) -> Result<Self> {
         let agentic_dir = vault_path.join(".agentic");
         std::fs::create_dir_all(&agentic_dir)?;

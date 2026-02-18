@@ -48,7 +48,7 @@ mod tests {
     use chrono::Utc;
 
     #[test]
-    fn test_roundtrip() {
+    fn test_roundtrip() -> Result<()> {
         let fm = FrontMatter {
             id: NoteId::new(),
             title: "Test Note".into(),
@@ -60,11 +60,12 @@ mod tests {
             status: NoteStatus::Seed,
         };
         let body = "Hello world\n\nSome content here.";
-        let raw = serialize(&fm, body).unwrap();
-        let (fm2, body2) = parse(&raw).unwrap();
+        let raw = serialize(&fm, body)?;
+        let (fm2, body2) = parse(&raw)?;
         assert_eq!(fm.id, fm2.id);
         assert_eq!(fm.title, fm2.title);
         assert_eq!(fm.tags, fm2.tags);
         assert_eq!(body, body2);
+        Ok(())
     }
 }

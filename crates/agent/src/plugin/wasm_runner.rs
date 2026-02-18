@@ -132,7 +132,8 @@ mod tests {
 
     #[test]
     fn missing_wasm_file_errors() {
-        let mut runner = WasmPluginRunner::new(64, 1_000_000).unwrap();
+        let mut runner = WasmPluginRunner::new(64, 1_000_000)
+            .expect("create wasm runner");
         let result = runner.execute(
             Path::new("/nonexistent.wasm"),
             "test",
@@ -141,6 +142,7 @@ mod tests {
             None,
         );
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("read"));
+        let err = result.expect_err("missing wasm file error");
+        assert!(err.to_string().contains("read"));
     }
 }

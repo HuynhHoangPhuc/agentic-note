@@ -69,12 +69,12 @@ fn handle_request(
         Ok(Response::builder()
             .header("content-type", "application/openmetrics-text; version=1.0.0; charset=utf-8")
             .body(http_body_util::Full::new(Bytes::from(body)))
-            .unwrap())
+            .unwrap_or_else(|_| Response::new(http_body_util::Full::new(Bytes::from("")))))
     } else {
         Ok(Response::builder()
             .status(404)
             .body(http_body_util::Full::new(Bytes::from("Not Found")))
-            .unwrap())
+            .unwrap_or_else(|_| Response::new(http_body_util::Full::new(Bytes::from("Not Found")))))
     }
 }
 

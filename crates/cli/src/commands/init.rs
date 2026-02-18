@@ -4,7 +4,11 @@ use std::path::PathBuf;
 use crate::output::{print_json, OutputFormat};
 
 pub fn run(path: Option<PathBuf>, fmt: OutputFormat) -> anyhow::Result<()> {
-    let vault_path = path.unwrap_or_else(|| std::env::current_dir().unwrap());
+    let vault_path = match path {
+        Some(p) => p,
+        None => std::env::current_dir()
+            .map_err(|e| anyhow::anyhow!("resolve current directory for init: {e}"))?,
+    };
     init_vault(&vault_path)?;
 
     match fmt {

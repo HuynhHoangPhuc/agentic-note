@@ -71,7 +71,9 @@ mod tests {
             vault_path: PathBuf::from("/tmp/vault"),
         };
         ctx.set_output("summarise", serde_json::json!({"summary": "hello"}));
-        let out = ctx.get_output("summarise").unwrap();
+        let out = ctx
+            .get_output("summarise")
+            .expect("expected output present");
         assert_eq!(out["summary"], "hello");
         assert!(ctx.get_output("missing").is_none());
     }

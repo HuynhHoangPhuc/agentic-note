@@ -2,12 +2,22 @@ use pulldown_cmark::{Event, Parser, Tag};
 use regex::Regex;
 use std::sync::LazyLock;
 
-static WIKILINK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[\[([^\]]+)\]\]").expect("invalid wikilink regex"));
+static WIKILINK_RE: LazyLock<Result<Regex, String>> = LazyLock::new(|| {
+    Regex::new(r"\[\[([^\]]+)\]\]")
+        .map_err(|e| format!("wikilink regex init failed: {e}"))
+});
 
 /// Extract `[[wikilink]]` targets from markdown body.
 pub fn extract_wikilinks(body: &str) -> Vec<String> {
-    WIKILINK_RE
+    let regex = match WIKILINK_RE.as_ref() {
+        Ok(regex) => regex,
+        Err(message) => {
+            tracing::warn!(error = message, "wikilink regex unavailable");
+            return Vec::new();
+        }
+    };
+
+    regex
         .captures_iter(body)
         .map(|c| c[1].to_string())
         .collect()

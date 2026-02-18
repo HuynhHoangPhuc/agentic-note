@@ -119,23 +119,25 @@ mod tests {
     use super::*;
     use tempfile::NamedTempFile;
 
-    fn tmp_cache() -> (LlmCache, NamedTempFile) {
-        let f = NamedTempFile::new().unwrap();
-        let c = LlmCache::new(f.path()).unwrap();
-        (c, f)
+    fn tmp_cache() -> Result<(LlmCache, NamedTempFile)> {
+        let f = NamedTempFile::new().map_err(AgenticError::Io)?;
+        let c = LlmCache::new(f.path())?;
+        Ok((c, f))
     }
 
     #[test]
-    fn test_get_miss() {
-        let (cache, _f) = tmp_cache();
-        assert!(cache.get("nonexistent").unwrap().is_none());
+    fn test_get_miss() -> Result<()> {
+        let (cache, _f) = tmp_cache()?;
+        assert!(cache.get("nonexistent")?.is_none());
+        Ok(())
     }
 
     #[test]
-    fn test_put_and_get() {
-        let (cache, _f) = tmp_cache();
-        cache.put("k1", "hello world", "gpt-4").unwrap();
-        assert_eq!(cache.get("k1").unwrap().as_deref(), Some("hello world"));
+    fn test_put_and_get() -> Result<()> {
+        let (cache, _f) = tmp_cache()?;
+        cache.put("k1", "hello world", "gpt-4")?;
+        assert_eq!(cache.get("k1")?.as_deref(), Some("hello world"));
+        Ok(())
     }
 
     #[test]
@@ -153,12 +155,13 @@ mod tests {
     }
 
     #[test]
-    fn test_prune_removes_old_entries() {
-        let (cache, _f) = tmp_cache();
-        cache.put("old", "old response", "gpt-4").unwrap();
+    fn test_prune_removes_old_entries() -> Result<()> {
+        let (cache, _f) = tmp_cache()?;
+        cache.put("old", "old response", "gpt-4")?;
         // prune with 0 TTL removes everything
-        let deleted = cache.prune(0).unwrap();
+        let deleted = cache.prune(0)?;
         assert!(deleted >= 1);
-        assert!(cache.get("old").unwrap().is_none());
+        assert!(cache.get("old")?.is_none());
+        Ok(())
     }
 }
