@@ -48,9 +48,9 @@ impl StorageBackend for SqliteBackend {
         let params: Vec<String> = params.iter().map(|s| s.to_string()).collect();
 
         tokio::task::spawn_blocking(move || {
-            let conn = conn.lock().map_err(|e| {
-                AgenticError::Database(format!("sqlite lock: {e}"))
-            })?;
+            let conn = conn
+                .lock()
+                .map_err(|e| AgenticError::Database(format!("sqlite lock: {e}")))?;
             let param_refs: Vec<&dyn rusqlite::types::ToSql> = params
                 .iter()
                 .map(|s| s as &dyn rusqlite::types::ToSql)
@@ -70,9 +70,9 @@ impl StorageBackend for SqliteBackend {
         let params: Vec<String> = params.iter().map(|s| s.to_string()).collect();
 
         tokio::task::spawn_blocking(move || {
-            let conn = conn.lock().map_err(|e| {
-                AgenticError::Database(format!("sqlite lock: {e}"))
-            })?;
+            let conn = conn
+                .lock()
+                .map_err(|e| AgenticError::Database(format!("sqlite lock: {e}")))?;
             let param_refs: Vec<&dyn rusqlite::types::ToSql> = params
                 .iter()
                 .map(|s| s as &dyn rusqlite::types::ToSql)
@@ -80,11 +80,8 @@ impl StorageBackend for SqliteBackend {
             let mut stmt = conn
                 .prepare(&sql)
                 .map_err(|e| AgenticError::Database(format!("sqlite prepare: {e}")))?;
-            let col_names: Vec<String> = stmt
-                .column_names()
-                .iter()
-                .map(|s| s.to_string())
-                .collect();
+            let col_names: Vec<String> =
+                stmt.column_names().iter().map(|s| s.to_string()).collect();
             let rows = stmt
                 .query_map(param_refs.as_slice(), |row| {
                     let mut columns = HashMap::new();
@@ -116,9 +113,9 @@ impl StorageBackend for SqliteBackend {
         let sql = sql.to_string();
 
         tokio::task::spawn_blocking(move || {
-            let conn = conn.lock().map_err(|e| {
-                AgenticError::Database(format!("sqlite lock: {e}"))
-            })?;
+            let conn = conn
+                .lock()
+                .map_err(|e| AgenticError::Database(format!("sqlite lock: {e}")))?;
             conn.execute_batch(&sql)
                 .map_err(|e| AgenticError::Database(format!("sqlite batch: {e}")))
         })
@@ -135,9 +132,7 @@ mod tests {
     async fn sqlite_backend_basic_operations() {
         let backend = SqliteBackend::open_in_memory().expect("open sqlite memory");
         backend
-            .execute_batch(
-                "CREATE TABLE test (id TEXT PRIMARY KEY, value TEXT);",
-            )
+            .execute_batch("CREATE TABLE test (id TEXT PRIMARY KEY, value TEXT);")
             .await
             .expect("create table");
 

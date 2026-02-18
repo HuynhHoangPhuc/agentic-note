@@ -150,6 +150,9 @@ mod tests {
         };
         assert_eq!(result.outcomes.len(), 2);
         assert_eq!(result.total_merged, 2);
-        assert!(matches!(result.outcomes[1].status, PeerSyncStatus::Failed(_)));
+        assert!(matches!(
+            result.outcomes[1].status,
+            PeerSyncStatus::Failed(_)
+        ));
     }
 }

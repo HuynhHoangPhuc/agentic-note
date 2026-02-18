@@ -116,9 +116,8 @@ pub fn encrypt_envelope(
             })
         }
         EnvelopeVersion::DoubleRatchet => {
-            let session = dr_session.ok_or_else(|| {
-                AgenticError::Encryption("missing double ratchet session".into())
-            })?;
+            let session = dr_session
+                .ok_or_else(|| AgenticError::Encryption("missing double ratchet session".into()))?;
             let payload = dr_encrypt(session, plaintext, associated_data)?;
             let bytes = bincode::serialize(&payload)
                 .map_err(|e| AgenticError::Encryption(format!("encode dr payload: {e}")))?;
@@ -146,9 +145,8 @@ pub fn decrypt_envelope(
         v if v == EnvelopeVersion::DoubleRatchet as u8 => {
             let payload: DrPayload = bincode::deserialize(&envelope.payload)
                 .map_err(|e| AgenticError::Encryption(format!("decode dr payload: {e}")))?;
-            let session = dr_session.ok_or_else(|| {
-                AgenticError::Encryption("missing double ratchet session".into())
-            })?;
+            let session = dr_session
+                .ok_or_else(|| AgenticError::Encryption("missing double ratchet session".into()))?;
             dr_decrypt(session, &payload, associated_data)
         }
         other => Err(AgenticError::Encryption(format!(
@@ -213,7 +211,11 @@ mod tests {
         let pub1 = PublicKey::from(&secret1);
         let pub2 = PublicKey::from(&secret2);
 
-        assert_eq!(pub1.to_bytes(), pub2.to_bytes(), "derivation must be deterministic");
+        assert_eq!(
+            pub1.to_bytes(),
+            pub2.to_bytes(),
+            "derivation must be deterministic"
+        );
     }
 
     #[test]
@@ -233,16 +235,10 @@ mod tests {
         let key = test_shared_key();
         let plaintext = b"legacy payload";
 
-        let envelope = encrypt_envelope(
-            EnvelopeVersion::Legacy,
-            &key,
-            None,
-            plaintext,
-            b"ad",
-        )
-        .expect("encrypt legacy envelope");
-        let decrypted = decrypt_envelope(&key, None, &envelope, b"ad")
-            .expect("decrypt legacy envelope");
+        let envelope = encrypt_envelope(EnvelopeVersion::Legacy, &key, None, plaintext, b"ad")
+            .expect("encrypt legacy envelope");
+        let decrypted =
+            decrypt_envelope(&key, None, &envelope, b"ad").expect("decrypt legacy envelope");
 
         assert_eq!(decrypted, plaintext);
     }
@@ -253,10 +249,10 @@ mod tests {
         let (bob_keypair, bob_prekey) =
             crate::double_ratchet::generate_prekey().expect("generate prekey");
         let root = crate::double_ratchet::derive_x3dh_root(bob_prekey);
-        let mut alice = crate::double_ratchet::init_x3dh_initiator(root, bob_prekey)
-            .expect("init initiator");
-        let mut bob = crate::double_ratchet::init_x3dh_responder(root, bob_keypair)
-            .expect("init responder");
+        let mut alice =
+            crate::double_ratchet::init_x3dh_initiator(root, bob_prekey).expect("init initiator");
+        let mut bob =
+            crate::double_ratchet::init_x3dh_responder(root, bob_keypair).expect("init responder");
 
         let envelope = encrypt_envelope(
             EnvelopeVersion::DoubleRatchet,
@@ -266,8 +262,8 @@ mod tests {
             b"ad",
         )
         .expect("encrypt dr envelope");
-        let decrypted = decrypt_envelope(&key, Some(&mut bob), &envelope, b"ad")
-            .expect("decrypt dr envelope");
+        let decrypted =
+            decrypt_envelope(&key, Some(&mut bob), &envelope, b"ad").expect("decrypt dr envelope");
 
         assert_eq!(decrypted, b"hello");
     }

@@ -454,10 +454,13 @@ mod tests {
     fn condition_eval_true_false() {
         let mut outputs = HashMap::new();
         outputs.insert("kw".into(), serde_json::json!({ "status": "ok" }));
-        assert!(condition::evaluate_condition(r#"kw.status == "ok""#, &outputs)
-            .expect("condition ok"));
-        assert!(!condition::evaluate_condition(r#"kw.status == "bad""#, &outputs)
-            .expect("condition bad"));
+        assert!(
+            condition::evaluate_condition(r#"kw.status == "ok""#, &outputs).expect("condition ok")
+        );
+        assert!(
+            !condition::evaluate_condition(r#"kw.status == "bad""#, &outputs)
+                .expect("condition bad")
+        );
     }
 
     #[tokio::test]

@@ -3,8 +3,7 @@ use regex::Regex;
 use std::sync::LazyLock;
 
 static WIKILINK_RE: LazyLock<Result<Regex, String>> = LazyLock::new(|| {
-    Regex::new(r"\[\[([^\]]+)\]\]")
-        .map_err(|e| format!("wikilink regex init failed: {e}"))
+    Regex::new(r"\[\[([^\]]+)\]\]").map_err(|e| format!("wikilink regex init failed: {e}"))
 });
 
 /// Extract `[[wikilink]]` targets from markdown body.

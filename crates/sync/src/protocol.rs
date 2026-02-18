@@ -32,7 +32,10 @@ pub enum SyncPayload {
     /// Uncompressed blob data.
     FullBlob { hash: String, data: Vec<u8> },
     /// Zstd-compressed blob data.
-    CompressedBlob { hash: String, compressed_data: Vec<u8> },
+    CompressedBlob {
+        hash: String,
+        compressed_data: Vec<u8>,
+    },
 }
 
 impl SyncPayload {
@@ -40,7 +43,10 @@ impl SyncPayload {
     pub fn from_blob(hash: String, data: Vec<u8>, compress: bool, level: i32) -> Result<Self> {
         if compress {
             let compressed_data = crate::compression::compress(&data, level)?;
-            Ok(Self::CompressedBlob { hash, compressed_data })
+            Ok(Self::CompressedBlob {
+                hash,
+                compressed_data,
+            })
         } else {
             Ok(Self::FullBlob { hash, data })
         }
@@ -58,7 +64,10 @@ impl SyncPayload {
     pub fn into_data(self) -> Result<(String, Vec<u8>)> {
         match self {
             Self::FullBlob { hash, data } => Ok((hash, data)),
-            Self::CompressedBlob { hash, compressed_data } => {
+            Self::CompressedBlob {
+                hash,
+                compressed_data,
+            } => {
                 let data = crate::compression::decompress(&compressed_data)?;
                 Ok((hash, data))
             }
@@ -459,7 +468,8 @@ mod tests {
             },
         ]);
 
-        let result = run_sync_initiator(&mut mock, &cas, vault, &ConflictPolicy::NewestWins).await?;
+        let result =
+            run_sync_initiator(&mut mock, &cas, vault, &ConflictPolicy::NewestWins).await?;
 
         // First message sent by initiator should be SyncRequest
         assert!(matches!(mock.send_buf[0], SyncMessage::SyncRequest { .. }));

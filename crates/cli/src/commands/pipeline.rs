@@ -1,8 +1,8 @@
 use clap::Subcommand;
 use std::path::Path;
 
-use agentic_note_agent::engine::PipelineScheduler;
 use crate::output::{print_json, OutputFormat};
+use agentic_note_agent::engine::PipelineScheduler;
 
 #[derive(Subcommand)]
 pub enum PipelineCmd {
@@ -21,14 +21,17 @@ pub fn run(cmd: PipelineCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::Re
 
             match fmt {
                 OutputFormat::Json => {
-                    let items: Vec<_> = schedules.iter().map(|s| {
-                        serde_json::json!({
-                            "pipeline": s.pipeline_name,
-                            "trigger_type": format!("{:?}", s.trigger_type),
-                            "cron": s.cron_expr,
-                            "watch_path": s.watch_path,
+                    let items: Vec<_> = schedules
+                        .iter()
+                        .map(|s| {
+                            serde_json::json!({
+                                "pipeline": s.pipeline_name,
+                                "trigger_type": format!("{:?}", s.trigger_type),
+                                "cron": s.cron_expr,
+                                "watch_path": s.watch_path,
+                            })
                         })
-                    }).collect();
+                        .collect();
                     print_json(&serde_json::json!({
                         "active_schedules": items,
                         "total": count,
@@ -37,10 +40,12 @@ pub fn run(cmd: PipelineCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::Re
                 OutputFormat::Human => {
                     if schedules.is_empty() {
                         println!("No active pipeline schedules.");
-                        println!("Add trigger.type = \"cron\" or \"watch\" to pipeline TOML files.");
+                        println!(
+                            "Add trigger.type = \"cron\" or \"watch\" to pipeline TOML files."
+                        );
                     } else {
                         println!("Active Pipeline Schedules ({count}):");
-                        println!("{:<20} {:<8} {}", "Pipeline", "Type", "Config");
+                        println!("{:<20} {:<8} Config", "Pipeline", "Type");
                         println!("{}", "-".repeat(50));
                         for s in schedules {
                             let config = match (&s.cron_expr, &s.watch_path) {
@@ -48,7 +53,12 @@ pub fn run(cmd: PipelineCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::Re
                                 (_, Some(p)) => format!("watch: {p}"),
                                 _ => "\u{2014}".to_string(),
                             };
-                            println!("{:<20} {:<8} {}", s.pipeline_name, format!("{:?}", s.trigger_type), config);
+                            println!(
+                                "{:<20} {:<8} {}",
+                                s.pipeline_name,
+                                format!("{:?}", s.trigger_type),
+                                config
+                            );
                         }
                     }
                 }

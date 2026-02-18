@@ -67,7 +67,10 @@ fn handle_request(
     if req.uri().path() == "/metrics" {
         let body = handle.encode();
         Ok(Response::builder()
-            .header("content-type", "application/openmetrics-text; version=1.0.0; charset=utf-8")
+            .header(
+                "content-type",
+                "application/openmetrics-text; version=1.0.0; charset=utf-8",
+            )
             .body(http_body_util::Full::new(Bytes::from(body)))
             .unwrap_or_else(|_| Response::new(http_body_util::Full::new(Bytes::from("")))))
     } else {

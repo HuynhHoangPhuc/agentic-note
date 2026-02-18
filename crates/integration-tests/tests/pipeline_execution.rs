@@ -1,7 +1,7 @@
+use agentic_note_agent::engine::pipeline::StageConfig;
 use agentic_note_agent::engine::{
     AgentHandler, PipelineConfig, StageContext, StageExecutor, TriggerConfig, TriggerType,
 };
-use agentic_note_agent::engine::pipeline::StageConfig;
 use agentic_note_core::types::ErrorPolicy;
 use agentic_note_test_utils::TempVault;
 use async_trait::async_trait;
@@ -16,7 +16,11 @@ impl AgentHandler for EchoAgent {
         "echo"
     }
 
-    async fn execute(&self, _ctx: &mut StageContext, _config: &toml::Value) -> agentic_note_core::Result<Value> {
+    async fn execute(
+        &self,
+        _ctx: &mut StageContext,
+        _config: &toml::Value,
+    ) -> agentic_note_core::Result<Value> {
         Ok(serde_json::json!({"summary": "ok"}))
     }
 }

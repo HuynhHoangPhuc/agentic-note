@@ -254,9 +254,9 @@ impl LlmProvider for OpenAiProvider {
             .await
             .map_err(|e| AgenticError::Agent(format!("openai batch retrieve: {e}")))?;
 
-        let output_id = batch.output_file_id.ok_or_else(|| {
-            AgenticError::Agent("openai batch output file not ready".into())
-        })?;
+        let output_id = batch
+            .output_file_id
+            .ok_or_else(|| AgenticError::Agent("openai batch output file not ready".into()))?;
 
         let content = client
             .files()
@@ -274,10 +274,7 @@ impl LlmProvider for OpenAiProvider {
             }
             let value: Value = serde_json::from_str(line)
                 .map_err(|e| AgenticError::Parse(format!("batch output json: {e}")))?;
-            let custom_id = value["custom_id"]
-                .as_str()
-                .unwrap_or_default()
-                .to_string();
+            let custom_id = value["custom_id"].as_str().unwrap_or_default().to_string();
             let content_value = value["response"]["body"]["choices"][0]["message"]["content"]
                 .as_str()
                 .unwrap_or_default()

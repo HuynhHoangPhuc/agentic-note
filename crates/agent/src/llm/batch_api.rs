@@ -62,11 +62,7 @@ pub fn build_batch_jsonl(
     let mut lines = Vec::with_capacity(requests.len());
 
     for (index, (messages, opts)) in requests.iter().enumerate() {
-        let model = opts
-            .model
-            .as_deref()
-            .unwrap_or(model_fallback)
-            .to_string();
+        let model = opts.model.as_deref().unwrap_or(model_fallback).to_string();
 
         let batch_messages = messages
             .iter()
@@ -97,10 +93,8 @@ pub fn build_batch_jsonl(
             },
         };
 
-        let line =
-            serde_json::to_string(&entry).map_err(|e| AgenticError::Parse(format!(
-                "serialize batch jsonl entry: {e}"
-            )))?;
+        let line = serde_json::to_string(&entry)
+            .map_err(|e| AgenticError::Parse(format!("serialize batch jsonl entry: {e}")))?;
         lines.push(line);
     }
 

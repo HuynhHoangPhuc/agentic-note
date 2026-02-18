@@ -265,8 +265,9 @@ mod tests {
         match res {
             ConflictResolution::Resolved { merged_blob_id, .. } => {
                 let merged_bytes = store.load(&merged_blob_id)?;
-                let merged_text = String::from_utf8(merged_bytes)
-                    .map_err(|e| agentic_note_core::AgenticError::Parse(format!("utf8 merged: {e}")))?;
+                let merged_text = String::from_utf8(merged_bytes).map_err(|e| {
+                    agentic_note_core::AgenticError::Parse(format!("utf8 merged: {e}"))
+                })?;
                 assert!(merged_text.contains("<<<< LOCAL"));
                 assert!(merged_text.contains("===="));
                 assert!(merged_text.contains(">>>> REMOTE"));

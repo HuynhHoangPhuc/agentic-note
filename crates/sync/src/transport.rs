@@ -5,12 +5,24 @@ use serde::{Deserialize, Serialize};
 /// Messages exchanged during sync protocol.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SyncMessage {
-    SyncRequest { snapshot_id: String },
-    SyncResponse { snapshot_id: String },
-    BlobRequest { ids: Vec<String> },
-    BlobBatch { blobs: Vec<(String, Vec<u8>)> },
-    SyncComplete { snapshot_id: String },
-    Error { message: String },
+    SyncRequest {
+        snapshot_id: String,
+    },
+    SyncResponse {
+        snapshot_id: String,
+    },
+    BlobRequest {
+        ids: Vec<String>,
+    },
+    BlobBatch {
+        blobs: Vec<(String, Vec<u8>)>,
+    },
+    SyncComplete {
+        snapshot_id: String,
+    },
+    Error {
+        message: String,
+    },
     /// An encrypted note blob sent from one peer to another.
     /// `sender_pubkey` is the sender's X25519 public key (32 bytes).
     EncryptedNote {

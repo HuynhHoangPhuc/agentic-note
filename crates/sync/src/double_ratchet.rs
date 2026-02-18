@@ -1,7 +1,7 @@
 use agentic_note_core::error::{AgenticError, Result};
+use bincode;
 use chacha20poly1305::aead::{Aead, KeyInit};
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
-use bincode;
 use hkdf::Hkdf;
 use rand::RngCore;
 use rand_os::OsRng;
@@ -43,7 +43,6 @@ pub struct DrSession {
     pub material: DrSessionMaterial,
     pub ratchet: DoubleRatchet<DrCryptoProvider>,
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct DrPublicKey(PublicKey);
@@ -164,10 +163,13 @@ impl ksi_double_ratchet::CryptoProvider for DrCryptoProvider {
         let body = &ciphertext[NONCE_LEN..];
         let cipher = ChaCha20Poly1305::new(Key::from_slice(key));
         cipher
-            .decrypt(Nonce::from_slice(nonce), chacha20poly1305::aead::Payload {
-                msg: body,
-                aad: associated_data,
-            })
+            .decrypt(
+                Nonce::from_slice(nonce),
+                chacha20poly1305::aead::Payload {
+                    msg: body,
+                    aad: associated_data,
+                },
+            )
             .map_err(|_| DecryptError::DecryptFailure)
     }
 }
@@ -286,9 +288,10 @@ pub fn dr_encrypt(
     associated_data: &[u8],
 ) -> Result<DrPayload> {
     let mut adapter = OsRngAdapter::new()?;
-    let (header, ciphertext) = session
-        .ratchet
-        .ratchet_encrypt(plaintext, associated_data, &mut adapter);
+    let (header, ciphertext) =
+        session
+            .ratchet
+            .ratchet_encrypt(plaintext, associated_data, &mut adapter);
 
     Ok(DrPayload {
         header: DrHeader {

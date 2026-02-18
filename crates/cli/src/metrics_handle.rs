@@ -40,7 +40,7 @@ pub struct SyncLabels {
 
 /// A cloneable histogram constructor that holds shared bucket boundaries.
 #[derive(Clone)]
-struct BucketedHistogram(Arc<Vec<f64>>);
+pub struct BucketedHistogram(Arc<Vec<f64>>);
 
 impl BucketedHistogram {
     fn new(buckets: impl Iterator<Item = f64>) -> Self {
@@ -76,8 +76,7 @@ impl MetricsHandle {
     pub fn new() -> Self {
         let mut registry = Registry::default();
 
-        let pipeline_ctor =
-            BucketedHistogram::new(exponential_buckets(0.001, 2.0, 15));
+        let pipeline_ctor = BucketedHistogram::new(exponential_buckets(0.001, 2.0, 15));
         let pipeline_duration =
             Family::<PipelineLabels, Histogram, BucketedHistogram>::new_with_constructor(
                 pipeline_ctor,
@@ -88,24 +87,18 @@ impl MetricsHandle {
             pipeline_duration.clone(),
         );
 
-        let search_ctor =
-            BucketedHistogram::new(exponential_buckets(0.0001, 2.0, 12));
+        let search_ctor = BucketedHistogram::new(exponential_buckets(0.0001, 2.0, 12));
         let search_duration =
-            Family::<SearchLabels, Histogram, BucketedHistogram>::new_with_constructor(
-                search_ctor,
-            );
+            Family::<SearchLabels, Histogram, BucketedHistogram>::new_with_constructor(search_ctor);
         registry.register(
             "search_query_duration_seconds",
             "Search query duration",
             search_duration.clone(),
         );
 
-        let sync_ctor =
-            BucketedHistogram::new(exponential_buckets(0.01, 2.0, 14));
+        let sync_ctor = BucketedHistogram::new(exponential_buckets(0.01, 2.0, 14));
         let sync_duration =
-            Family::<SyncLabels, Histogram, BucketedHistogram>::new_with_constructor(
-                sync_ctor,
-            );
+            Family::<SyncLabels, Histogram, BucketedHistogram>::new_with_constructor(sync_ctor);
         registry.register(
             "sync_duration_seconds",
             "Sync operation duration",

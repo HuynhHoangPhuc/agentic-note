@@ -139,9 +139,7 @@ fn merge_trees_inner(
                 let local_changed = anc_hash != Some(lh);
                 let remote_changed = anc_hash != Some(rh);
 
-                if local_changed && !remote_changed {
-                    result.applied.push(full_path);
-                } else if !local_changed && remote_changed {
+                if (local_changed && !remote_changed) || (!local_changed && remote_changed) {
                     result.applied.push(full_path);
                 } else {
                     // Both changed — recurse into subtrees or apply policy

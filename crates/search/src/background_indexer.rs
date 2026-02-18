@@ -104,7 +104,7 @@ async fn run_indexer_loop(
                         .into_iter()
                         .flat_map(|e| e.event.paths)
                         .filter(|p| {
-                            p.extension().map_or(false, |ext| ext == "md")
+                            p.extension().is_some_and(|ext| ext == "md")
                                 && p.starts_with(&vault_path_clone)
                         })
                         .collect();
@@ -222,10 +222,7 @@ async fn flush_batch(
             if let Some(ulid_part) = stem.split('-').next() {
                 if let Ok(note_id) = ulid_part.parse::<agentic_note_core::NoteId>() {
                     if let Err(e) = engine.remove_note(&note_id) {
-                        warn!(
-                            "Failed to remove index for {}: {e}",
-                            path.display()
-                        );
+                        warn!("Failed to remove index for {}: {e}", path.display());
                     }
                 }
             }

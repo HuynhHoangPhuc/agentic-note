@@ -27,23 +27,16 @@ impl VaultRegistry {
         // Create parent directory if it doesn't exist yet.
         if let Some(parent) = manifest_path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| {
-                AgenticError::MultiVault(format!(
-                    "create ~/.agentic-note dir: {e}"
-                ))
+                AgenticError::MultiVault(format!("create ~/.agentic-note dir: {e}"))
             })?;
         }
 
         let manifest = if manifest_path.exists() {
-            let content =
-                std::fs::read_to_string(&manifest_path).map_err(|e| {
-                    AgenticError::MultiVault(format!(
-                        "read {}: {e}",
-                        manifest_path.display()
-                    ))
-                })?;
-            toml::from_str(&content).map_err(|e| {
-                AgenticError::MultiVault(format!("parse vaults.toml: {e}"))
-            })?
+            let content = std::fs::read_to_string(&manifest_path).map_err(|e| {
+                AgenticError::MultiVault(format!("read {}: {e}", manifest_path.display()))
+            })?;
+            toml::from_str(&content)
+                .map_err(|e| AgenticError::MultiVault(format!("parse vaults.toml: {e}")))?
         } else {
             VaultManifest::default()
         };
@@ -56,38 +49,22 @@ impl VaultRegistry {
 
     /// Persist the current manifest to disk.
     pub fn save(&self) -> Result<()> {
-        let content = toml::to_string_pretty(&self.manifest).map_err(|e| {
-            AgenticError::MultiVault(format!("serialize manifest: {e}"))
-        })?;
+        let content = toml::to_string_pretty(&self.manifest)
+            .map_err(|e| AgenticError::MultiVault(format!("serialize manifest: {e}")))?;
         std::fs::write(&self.manifest_path, content).map_err(|e| {
-            AgenticError::MultiVault(format!(
-                "write {}: {e}",
-                self.manifest_path.display()
-            ))
+            AgenticError::MultiVault(format!("write {}: {e}", self.manifest_path.display()))
         })
     }
 
     /// Register a vault at `path` with the given `name`.
     ///
     /// If a vault with the same canonical path already exists, it is updated.
-    pub fn register(
-        &mut self,
-        path: PathBuf,
-        name: String,
-    ) -> Result<()> {
-        let canonical = std::fs::canonicalize(&path)
-            .unwrap_or_else(|_| path.clone());
+    pub fn register(&mut self, path: PathBuf, name: String) -> Result<()> {
+        let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
 
-        if let Some(entry) = self
-            .manifest
-            .vaults
-            .iter_mut()
-            .find(|v| {
-                std::fs::canonicalize(&v.path)
-                    .unwrap_or_else(|_| v.path.clone())
-                    == canonical
-            })
-        {
+        if let Some(entry) = self.manifest.vaults.iter_mut().find(|v| {
+            std::fs::canonicalize(&v.path).unwrap_or_else(|_| v.path.clone()) == canonical
+        }) {
             entry.name = name;
         } else {
             self.manifest.vaults.push(VaultEntry {
@@ -102,14 +79,11 @@ impl VaultRegistry {
 
     /// Remove a vault identified by `path` from the registry.
     pub fn unregister(&mut self, path: &Path) -> Result<()> {
-        let canonical = std::fs::canonicalize(path)
-            .unwrap_or_else(|_| path.to_path_buf());
+        let canonical = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
 
         let before = self.manifest.vaults.len();
         self.manifest.vaults.retain(|v| {
-            std::fs::canonicalize(&v.path)
-                .unwrap_or_else(|_| v.path.clone())
-                != canonical
+            std::fs::canonicalize(&v.path).unwrap_or_else(|_| v.path.clone()) != canonical
         });
 
         if self.manifest.vaults.len() == before {
@@ -136,9 +110,8 @@ impl VaultRegistry {
     }
 
     fn default_manifest_path() -> Result<PathBuf> {
-        let home = dirs::home_dir().ok_or_else(|| {
-            AgenticError::MultiVault("cannot resolve home directory".into())
-        })?;
+        let home = dirs::home_dir()
+            .ok_or_else(|| AgenticError::MultiVault("cannot resolve home directory".into()))?;
         Ok(home.join(".agentic-note").join("vaults.toml"))
     }
 }
@@ -181,8 +154,7 @@ mod tests {
         reg.save().expect("save registry");
 
         let content = std::fs::read_to_string(&manifest_path).expect("read manifest");
-        let loaded: VaultManifest = toml::from_str(&content)
-            .expect("parse manifest");
+        let loaded: VaultManifest = toml::from_str(&content).expect("parse manifest");
         assert_eq!(loaded.vaults.len(), 1);
         assert_eq!(loaded.vaults[0].name, "v1");
     }

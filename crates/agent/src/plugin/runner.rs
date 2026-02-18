@@ -68,9 +68,9 @@ impl PluginAgent {
 
         // Run WASM execution in blocking thread (wasmtime is sync).
         tokio::task::spawn_blocking(move || {
-            let mut r = runner_ref.lock().map_err(|e| {
-                AgenticError::Wasm(format!("lock runner: {e}"))
-            })?;
+            let mut r = runner_ref
+                .lock()
+                .map_err(|e| AgenticError::Wasm(format!("lock runner: {e}")))?;
             r.execute(&wasm_path, &name, &input, Some(fuel), Some(mem))
         })
         .await
@@ -99,7 +99,9 @@ impl PluginAgent {
             .map_err(|e| AgenticError::Plugin(format!("spawn {}: {e}", exe_path.display())))?;
 
         if let Some(mut stdin) = child.stdin.take() {
-            stdin.write_all(&input_bytes).await
+            stdin
+                .write_all(&input_bytes)
+                .await
                 .map_err(|e| AgenticError::Plugin(format!("write stdin: {e}")))?;
         }
 
@@ -115,7 +117,9 @@ impl PluginAgent {
             let stderr = String::from_utf8_lossy(&output.stderr);
             return Err(AgenticError::Plugin(format!(
                 "plugin '{}' exited with {}: {}",
-                self.manifest.name, output.status, stderr.trim()
+                self.manifest.name,
+                output.status,
+                stderr.trim()
             )));
         }
 

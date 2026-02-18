@@ -210,17 +210,10 @@ mod tests {
         std::fs::write(vault.join("note.md"), b"# Hello").expect("write note");
         let cas = temp_cas(vault);
 
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None)
-            .expect("create snapshot");
+        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
 
-        let outcome = merge_after_sync(
-            &cas,
-            &snap.id,
-            &snap.id,
-            &snap.id,
-            &ConflictPolicy::Manual,
-        )
-        .expect("merge after sync");
+        let outcome = merge_after_sync(&cas, &snap.id, &snap.id, &snap.id, &ConflictPolicy::Manual)
+            .expect("merge after sync");
 
         assert_eq!(outcome.conflicts, 0);
     }
@@ -231,8 +224,7 @@ mod tests {
         let vault = dir.path();
         let cas = temp_cas(vault);
 
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None)
-            .expect("create snapshot");
+        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
         let conflict_paths = vec!["some/note.md".to_string()];
 
         write_conflict_files(&cas, vault, &conflict_paths, &snap.id, &snap.id)

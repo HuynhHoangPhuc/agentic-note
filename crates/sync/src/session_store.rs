@@ -29,9 +29,8 @@ impl SessionStore {
         {
             use std::os::unix::fs::PermissionsExt;
             let perms = std::fs::Permissions::from_mode(0o600);
-            std::fs::set_permissions(db_path, perms).map_err(|e| {
-                AgenticError::Sync(format!("set dr_sessions permissions: {e}"))
-            })?;
+            std::fs::set_permissions(db_path, perms)
+                .map_err(|e| AgenticError::Sync(format!("set dr_sessions permissions: {e}")))?;
         }
         Ok(())
     }
@@ -112,7 +111,10 @@ impl SessionStore {
 
     pub fn delete(&self, peer_id: &str) -> Result<()> {
         self.conn
-            .execute("DELETE FROM dr_sessions WHERE peer_id = ?1", params![peer_id])
+            .execute(
+                "DELETE FROM dr_sessions WHERE peer_id = ?1",
+                params![peer_id],
+            )
             .map_err(|e| AgenticError::Sync(format!("delete session: {e}")))?;
         Ok(())
     }

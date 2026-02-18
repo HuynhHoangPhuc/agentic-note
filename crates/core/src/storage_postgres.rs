@@ -61,9 +61,7 @@ impl StorageBackend for PostgresBackend {
                 let mut columns = HashMap::new();
                 for col in row.columns() {
                     let name = col.name().to_string();
-                    let val: String = row
-                        .try_get::<String, _>(col.ordinal())
-                        .unwrap_or_default();
+                    let val: String = row.try_get::<String, _>(col.ordinal()).unwrap_or_default();
                     columns.insert(name, val);
                 }
                 Row { columns }
@@ -112,7 +110,10 @@ mod tests {
 
     #[test]
     fn placeholder_conversion() {
-        assert_eq!(convert_placeholders("SELECT * WHERE id = ?1"), "SELECT * WHERE id = $1");
+        assert_eq!(
+            convert_placeholders("SELECT * WHERE id = ?1"),
+            "SELECT * WHERE id = $1"
+        );
         assert_eq!(
             convert_placeholders("INSERT INTO t (a, b) VALUES (?1, ?2)"),
             "INSERT INTO t (a, b) VALUES ($1, $2)"

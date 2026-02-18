@@ -1,6 +1,6 @@
-use agentic_note_cas::BlobStore;
 use agentic_note_cas::merge::three_way_merge;
 use agentic_note_cas::tree::{EntryType, Tree, TreeEntry};
+use agentic_note_cas::BlobStore;
 use agentic_note_core::types::ConflictPolicy;
 use proptest::prelude::*;
 use tempfile::TempDir;
@@ -12,7 +12,9 @@ fn setup_store() -> (TempDir, BlobStore) {
 }
 
 fn store_empty_tree(store: &BlobStore) -> String {
-    let tree = Tree { entries: Vec::new() };
+    let tree = Tree {
+        entries: Vec::new(),
+    };
     let bytes = serde_json::to_vec(&tree).expect("encode tree");
     store.store(&bytes).expect("store tree")
 }

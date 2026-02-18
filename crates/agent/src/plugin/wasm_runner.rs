@@ -9,8 +9,8 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use wasmtime::*;
 
-use super::wasm_host::HostState;
 use super::wasm_host::register_host_imports;
+use super::wasm_host::HostState;
 
 /// WASM plugin runner with module caching and resource limits.
 pub struct WasmPluginRunner {
@@ -25,8 +25,8 @@ impl WasmPluginRunner {
     pub fn new(memory_limit_mb: u32, fuel_limit: u64) -> Result<Self> {
         let mut config = Config::new();
         config.consume_fuel(true);
-        let engine = Engine::new(&config)
-            .map_err(|e| AgenticError::Wasm(format!("create engine: {e}")))?;
+        let engine =
+            Engine::new(&config).map_err(|e| AgenticError::Wasm(format!("create engine: {e}")))?;
 
         Ok(Self {
             engine,
@@ -45,7 +45,8 @@ impl WasmPluginRunner {
             .map_err(|e| AgenticError::Wasm(format!("read {}: {e}", wasm_path.display())))?;
         let module = Module::new(&self.engine, &wasm_bytes)
             .map_err(|e| AgenticError::Wasm(format!("compile {}: {e}", wasm_path.display())))?;
-        self.module_cache.insert(wasm_path.to_path_buf(), module.clone());
+        self.module_cache
+            .insert(wasm_path.to_path_buf(), module.clone());
         Ok(module)
     }
 
@@ -132,8 +133,7 @@ mod tests {
 
     #[test]
     fn missing_wasm_file_errors() {
-        let mut runner = WasmPluginRunner::new(64, 1_000_000)
-            .expect("create wasm runner");
+        let mut runner = WasmPluginRunner::new(64, 1_000_000).expect("create wasm runner");
         let result = runner.execute(
             Path::new("/nonexistent.wasm"),
             "test",

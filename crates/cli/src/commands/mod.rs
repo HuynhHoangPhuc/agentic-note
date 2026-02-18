@@ -2,6 +2,7 @@ pub mod config;
 pub mod device;
 pub mod init;
 pub mod mcp_cmd;
+#[allow(dead_code)]
 pub mod metrics_cmd;
 pub mod note;
 pub mod pipeline;

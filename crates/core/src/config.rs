@@ -377,7 +377,7 @@ impl Default for LlmCacheConfig {
 }
 
 /// Encryption configuration for P2P sync.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EncryptionConfig {
     /// Enable end-to-end encryption for sync.
     #[serde(default)]
@@ -385,15 +385,6 @@ pub struct EncryptionConfig {
     /// Reject unencrypted peers when true.
     #[serde(default)]
     pub require_encryption: bool,
-}
-
-impl Default for EncryptionConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            require_encryption: false,
-        }
-    }
 }
 
 /// A registered vault entry for multi-vault sync.
@@ -489,8 +480,7 @@ model = "claude-sonnet-4-5-20250929"
 default_trust = "review"
 max_concurrent_pipelines = 2
 "#;
-        let config: AppConfig = toml::from_str(toml_str)
-            .expect("deserialize config");
+        let config: AppConfig = toml::from_str(toml_str).expect("deserialize config");
         assert_eq!(config.vault.path, PathBuf::from("/home/user/notes"));
         assert_eq!(config.llm.default_provider, "anthropic");
         assert_eq!(config.agent.max_concurrent_pipelines, 2);
@@ -530,8 +520,7 @@ batch_size = 100
 compression_enabled = false
 compression_level = 6
 "#;
-        let config: AppConfig = toml::from_str(toml_str)
-            .expect("deserialize config");
+        let config: AppConfig = toml::from_str(toml_str).expect("deserialize config");
         assert!(config.scheduler.enabled);
         assert_eq!(config.scheduler.watch_debounce_ms, 1000);
         assert!(config.metrics.enabled);
@@ -545,8 +534,7 @@ compression_level = 6
 
     #[test]
     fn test_empty_config_uses_defaults() {
-        let config: AppConfig = toml::from_str("")
-            .expect("deserialize empty config");
+        let config: AppConfig = toml::from_str("").expect("deserialize empty config");
         assert_eq!(config.vault.path, PathBuf::from("."));
         assert_eq!(config.vault.para_folders.len(), 6);
         assert_eq!(config.llm.default_provider, "openai");
@@ -561,8 +549,7 @@ compression_level = 6
 [vault]
 path = "/tmp/vault"
 "#;
-        let config: AppConfig = toml::from_str(toml_str)
-            .expect("deserialize config");
+        let config: AppConfig = toml::from_str(toml_str).expect("deserialize config");
         assert_eq!(config.vault.path, PathBuf::from("/tmp/vault"));
         assert_eq!(config.llm.default_provider, "openai");
         assert_eq!(config.agent.default_trust, TrustLevel::Review);

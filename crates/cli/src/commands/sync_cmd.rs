@@ -44,13 +44,11 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
                 if peer_ids.is_empty() {
                     match fmt {
                         OutputFormat::Human => {
-                            println!(
-                                "No paired devices. Use `device pair <PEER_ID>` to add one."
-                            )
+                            println!("No paired devices. Use `device pair <PEER_ID>` to add one.")
                         }
-                        OutputFormat::Json => print_json(
-                            &serde_json::json!({"error": "no paired devices"}),
-                        ),
+                        OutputFormat::Json => {
+                            print_json(&serde_json::json!({"error": "no paired devices"}))
+                        }
                     }
                     return Ok(());
                 }
@@ -90,7 +88,7 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
                     }
                     OutputFormat::Human => {
                         println!("Batch sync complete ({} peers)", result.outcomes.len());
-                        println!("{:<20} {:<12} {:<8} {}", "Peer", "Status", "Notes", "Duration");
+                        println!("{:<20} {:<12} {:<8} Duration", "Peer", "Status", "Notes");
                         println!("{}", "-".repeat(52));
                         for o in &result.outcomes {
                             let status = match &o.status {
@@ -230,9 +228,9 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
                 OutputFormat::Json => {
                     let entries: Vec<_> = results
                         .iter()
-                        .map(|(name, status)| {
-                            serde_json::json!({ "vault": name, "status": status })
-                        })
+                        .map(
+                            |(name, status)| serde_json::json!({ "vault": name, "status": status }),
+                        )
                         .collect();
                     print_json(&serde_json::json!({ "vault_sync_results": entries }));
                 }

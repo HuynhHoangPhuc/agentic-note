@@ -49,11 +49,7 @@ pub fn run(cmd: VaultRegistryCmd, fmt: OutputFormat) -> anyhow::Result<()> {
                     "name": resolved_name,
                 })),
                 OutputFormat::Human => {
-                    println!(
-                        "Registered vault '{}' at {}",
-                        resolved_name,
-                        path.display()
-                    );
+                    println!("Registered vault '{}' at {}", resolved_name, path.display());
                 }
             }
         }
@@ -98,14 +94,18 @@ pub fn run(cmd: VaultRegistryCmd, fmt: OutputFormat) -> anyhow::Result<()> {
                         println!("No vaults registered. Use `vault register <path>` to add one.");
                     } else {
                         println!("Registered vaults ({}):", vaults.len());
-                        println!("{:<25} {:<30} {}", "Name", "Path", "Sync");
+                        println!("{:<25} {:<30} Sync", "Name", "Path");
                         println!("{}", "-".repeat(62));
                         for v in vaults {
                             println!(
                                 "{:<25} {:<30} {}",
                                 v.name,
                                 v.path.display(),
-                                if v.sync_enabled { "enabled" } else { "disabled" }
+                                if v.sync_enabled {
+                                    "enabled"
+                                } else {
+                                    "disabled"
+                                }
                             );
                         }
                     }

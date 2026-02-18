@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 fn default_debounce() -> u64 {
     500
@@ -80,7 +80,7 @@ impl TriggerConfig {
 }
 
 /// Minimal glob-like path filter: supports `**` suffix wildcard only.
-fn path_matches(filter: &str, path: &PathBuf) -> bool {
+fn path_matches(filter: &str, path: &Path) -> bool {
     let path_str = path.to_string_lossy();
     if let Some(prefix) = filter.strip_suffix("/**") {
         // Match anything under the given directory prefix.

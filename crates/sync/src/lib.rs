@@ -137,9 +137,7 @@ impl SyncEngine {
 /// sequentially. Per-vault errors are captured rather than aborting the whole run.
 ///
 /// Returns a vec of `(vault_name, status_message)` for every vault processed.
-pub async fn sync_all_vaults(
-    registry: &VaultRegistry,
-) -> Result<Vec<(String, String)>> {
+pub async fn sync_all_vaults(registry: &VaultRegistry) -> Result<Vec<(String, String)>> {
     let enabled = registry.sync_enabled();
     let mut results: Vec<(String, String)> = Vec::with_capacity(enabled.len());
 
@@ -152,9 +150,7 @@ pub async fn sync_all_vaults(
 }
 
 /// Internal helper: sync one vault entry, returning a human-readable status string.
-async fn sync_single_vault_entry(
-    entry: &agentic_note_core::config::VaultEntry,
-) -> String {
+async fn sync_single_vault_entry(entry: &agentic_note_core::config::VaultEntry) -> String {
     use agentic_note_core::types::ConflictPolicy;
 
     if entry.default_peers.is_empty() {
@@ -178,7 +174,10 @@ async fn sync_single_vault_entry(
     }
 
     if errors.is_empty() {
-        format!("ok: synced {synced} notes across {} peers", entry.default_peers.len())
+        format!(
+            "ok: synced {synced} notes across {} peers",
+            entry.default_peers.len()
+        )
     } else {
         format!(
             "partial: {synced} notes synced, {} errors: {}",

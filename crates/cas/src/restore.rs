@@ -17,7 +17,7 @@ pub fn restore(vault: &Path, cas: &Cas, snapshot_id: &ObjectId) -> Result<()> {
     let snap = Snapshot::load(cas, snapshot_id)?;
 
     // 3. Rebuild directory tree from the snapshot's root tree
-    restore_tree(vault, cas, &snap.root_tree, vault)?;
+    restore_tree(cas, &snap.root_tree, vault)?;
 
     info!("vault restored to snapshot {}", snapshot_id);
     Ok(())
@@ -25,7 +25,7 @@ pub fn restore(vault: &Path, cas: &Cas, snapshot_id: &ObjectId) -> Result<()> {
 
 /// Recursively restore files from a tree object into `dest_dir`.
 /// Files present on disk but absent from the tree are removed.
-fn restore_tree(vault_root: &Path, cas: &Cas, tree_id: &ObjectId, dest_dir: &Path) -> Result<()> {
+fn restore_tree(cas: &Cas, tree_id: &ObjectId, dest_dir: &Path) -> Result<()> {
     let tree = Tree::load(&cas.blob_store, tree_id)?;
 
     // Collect names that should exist after restore
@@ -64,7 +64,7 @@ fn restore_tree(vault_root: &Path, cas: &Cas, tree_id: &ObjectId, dest_dir: &Pat
             }
             EntryType::Tree => {
                 std::fs::create_dir_all(&dest_path)?;
-                restore_tree(vault_root, cas, &entry.hash, &dest_path)?;
+                restore_tree(cas, &entry.hash, &dest_path)?;
             }
         }
     }

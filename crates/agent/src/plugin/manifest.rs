@@ -7,19 +7,14 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 /// Plugin runtime type.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum PluginRuntime {
     /// WASM sandbox (default).
+    #[default]
     Wasm,
     /// Legacy subprocess execution.
     Subprocess,
-}
-
-impl Default for PluginRuntime {
-    fn default() -> Self {
-        Self::Wasm
-    }
 }
 
 /// Plugin metadata loaded from `plugin.toml`.
@@ -76,8 +71,7 @@ version = "0.1.0"
 description = "A test"
 executable = "plugin.wasm"
 "#;
-        let manifest: PluginManifest = toml::from_str(toml_str)
-            .expect("parse manifest");
+        let manifest: PluginManifest = toml::from_str(toml_str).expect("parse manifest");
         assert_eq!(manifest.runtime, PluginRuntime::Wasm);
         assert_eq!(manifest.memory_limit_mb, 64);
         assert_eq!(manifest.fuel_limit, 1_000_000);
@@ -92,8 +86,7 @@ description = "Legacy plugin"
 executable = "run.sh"
 runtime = "subprocess"
 "#;
-        let manifest: PluginManifest = toml::from_str(toml_str)
-            .expect("parse manifest");
+        let manifest: PluginManifest = toml::from_str(toml_str).expect("parse manifest");
         assert_eq!(manifest.runtime, PluginRuntime::Subprocess);
     }
 }

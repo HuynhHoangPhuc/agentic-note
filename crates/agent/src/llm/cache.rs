@@ -104,10 +104,7 @@ impl LlmCache {
             .to_rfc3339();
 
         let deleted = conn
-            .execute(
-                "DELETE FROM llm_cache WHERE created < ?1",
-                params![cutoff],
-            )
+            .execute("DELETE FROM llm_cache WHERE created < ?1", params![cutoff])
             .map_err(|e| AgenticError::Database(format!("llm cache prune: {e}")))?;
 
         Ok(deleted)

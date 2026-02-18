@@ -1,10 +1,10 @@
 use agentic_note_core::config::AppConfig;
-use std::path::PathBuf;
+use std::path::Path;
 
 use crate::output::{print_json, OutputFormat};
 
-pub fn show(vault_path: &PathBuf, fmt: OutputFormat) -> anyhow::Result<()> {
-    let config = AppConfig::load(Some(vault_path.clone()))?;
+pub fn show(vault_path: &Path, fmt: OutputFormat) -> anyhow::Result<()> {
+    let config = AppConfig::load(Some(vault_path.to_path_buf()))?;
 
     match fmt {
         OutputFormat::Json => {

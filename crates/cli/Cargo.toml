@@ -31,5 +31,11 @@ hyper = { workspace = true }
 http-body-util = { workspace = true }
 hyper-util = { workspace = true }
 
+[features]
+embeddings = ["agentic-note-search/embeddings"]
+
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = ['cfg(feature, values("embeddings"))'] }
+
 [dev-dependencies]
 agentic-note-test-utils = { path = "../test-utils" }

@@ -1,10 +1,8 @@
 use agentic_note_core::Result;
-use agentic_note_sync::encryption::{
-    decrypt_envelope, encrypt_envelope, EnvelopeVersion,
-};
 use agentic_note_sync::double_ratchet::{
     derive_x3dh_root, generate_prekey, init_x3dh_initiator, init_x3dh_responder,
 };
+use agentic_note_sync::encryption::{decrypt_envelope, encrypt_envelope, EnvelopeVersion};
 
 #[test]
 fn legacy_and_dr_round_trip() -> Result<()> {

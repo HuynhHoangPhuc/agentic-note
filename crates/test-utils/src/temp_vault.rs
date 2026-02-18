@@ -12,9 +12,8 @@ pub struct TempVault {
 impl TempVault {
     /// Create a new temp vault initialized with default folders.
     pub fn new() -> Result<Self> {
-        let root = TempDir::new().map_err(|e| {
-            std::io::Error::new(std::io::ErrorKind::Other, format!("create temp dir: {e}"))
-        })?;
+        let root =
+            TempDir::new().map_err(|e| std::io::Error::other(format!("create temp dir: {e}")))?;
         let vault_path = root.path().join("vault");
         init_vault(&vault_path)?;
         Ok(Self {

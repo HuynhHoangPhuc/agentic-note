@@ -255,8 +255,7 @@ mod tests {
         assert_eq!(result.total, 1);
         assert!(result.skipped.is_empty());
         assert_eq!(
-            ctx.get_output("echo_out").expect("echo output")
-                ["echoed"],
+            ctx.get_output("echo_out").expect("echo output")["echoed"],
             "hello world"
         );
     }

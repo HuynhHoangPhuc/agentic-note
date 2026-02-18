@@ -44,8 +44,8 @@ impl BatchCollector {
     /// map returned by `flush`. Identical requests share the same underlying
     /// execution slot.
     pub fn add(&mut self, messages: Vec<Message>, opts: ChatOpts) -> RequestId {
-        let messages_json = serde_json::to_string(&messages_to_value(&messages))
-            .unwrap_or_default();
+        let messages_json =
+            serde_json::to_string(&messages_to_value(&messages)).unwrap_or_default();
         let opts_json = opts_to_json(&opts);
         let model = opts.model.clone().unwrap_or_default();
         let cache_key = LlmCache::compute_key(&model, &messages_json, &opts_json);
@@ -101,8 +101,7 @@ impl BatchCollector {
 
         // Execute non-cached requests concurrently.
         if !futures_with_slots.is_empty() {
-            let (slots, futs): (Vec<usize>, Vec<_>) =
-                futures_with_slots.into_iter().unzip();
+            let (slots, futs): (Vec<usize>, Vec<_>) = futures_with_slots.into_iter().unzip();
 
             let results = futures::future::join_all(futs).await;
 
@@ -120,9 +119,9 @@ impl BatchCollector {
         // Build final map using canonical indirection.
         let mut out: HashMap<RequestId, String> = HashMap::new();
         for (idx, &slot) in canonical.iter().enumerate() {
-            let response = slot_responses[slot]
-                .clone()
-                .ok_or_else(|| AgenticError::Agent(format!("batch slot {slot} missing response")))?;
+            let response = slot_responses[slot].clone().ok_or_else(|| {
+                AgenticError::Agent(format!("batch slot {slot} missing response"))
+            })?;
             out.insert(RequestId(idx), response);
         }
 
@@ -213,12 +212,16 @@ mod tests {
         let provider: Arc<dyn LlmProvider> = Arc::new(CountingProvider(counter.clone()));
 
         // Pre-populate cache for key matching opts=default, model="".
-        let key = LlmCache::compute_key("", r#"[{"content":"cached","role":"user"}]"#, &opts_to_json(&ChatOpts::default()));
+        let key = LlmCache::compute_key(
+            "",
+            r#"[{"content":"cached","role":"user"}]"#,
+            &opts_to_json(&ChatOpts::default()),
+        );
         cache.put(&key, "cached-response", "")?;
 
         let mut bc = BatchCollector::new();
         let _id_cached = bc.add(vec![user_msg("cached")], ChatOpts::default());
-        let _id_fresh  = bc.add(vec![user_msg("fresh")], ChatOpts::default());
+        let _id_fresh = bc.add(vec![user_msg("fresh")], ChatOpts::default());
 
         let results = bc.flush(provider, &cache).await?;
         assert_eq!(results.len(), 2);
