@@ -7,6 +7,9 @@ edition = "2021"
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
+[features]
+live-tests = []
+
 [dependencies]
 agentic-note-core = { workspace = true }
 agentic-note-vault = { workspace = true }

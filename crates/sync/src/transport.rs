@@ -7,9 +7,11 @@ use serde::{Deserialize, Serialize};
 pub enum SyncMessage {
     SyncRequest {
         snapshot_id: String,
+        root_tree_id: String,
     },
     SyncResponse {
         snapshot_id: String,
+        root_tree_id: String,
     },
     BlobRequest {
         ids: Vec<String>,

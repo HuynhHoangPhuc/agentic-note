@@ -19,7 +19,7 @@ pub use cas::Cas;
 pub use conflict_policy::{resolve_conflict, AutoResolution, ConflictResolution};
 pub use diff::{diff_trees, DiffEntry, DiffStatus};
 pub use hash::{hash_bytes, hash_file, ObjectId};
-pub use merge::{three_way_merge, ConflictInfo, MergeResult};
+pub use merge::{build_merged_tree, three_way_merge, ConflictInfo, MergeResult};
 pub use restore::restore;
 pub use semantic_merge::{try_paragraph_merge, ConflictHunk, MergeAttempt};
 pub use snapshot::Snapshot;

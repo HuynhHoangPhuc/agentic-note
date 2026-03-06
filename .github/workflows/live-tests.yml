@@ -1,0 +1,31 @@
+name: Live Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * *"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  live-tests:
+    if: github.event_name != 'schedule' || github.repository == 'phuc/agentic-note'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: live-tests
+      - name: Verify live test secrets
+        run: |
+          test -n "$OPENAI_API_KEY"
+          test -n "$ANTHROPIC_API_KEY"
+      - name: Compile live-test suite
+        run: cargo test -p agentic-note-integration-tests --features live-tests --no-run
+      - name: Run live LLM integration tests
+        run: cargo test -p agentic-note-integration-tests --features live-tests --test llm_agent_integration -- --nocapture

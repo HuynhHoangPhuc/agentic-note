@@ -7,6 +7,8 @@ use super::batch_api::{build_batch_jsonl, BatchId, BatchStatus};
 use super::{ChatOpts, LlmProvider, Message};
 use std::sync::Arc;
 
+const OPENAI_API_BASE_URL: &str = "https://api.openai.com/v1";
+
 /// OpenAI-compatible provider (also works for Ollama and other OpenAI-API clones).
 pub struct OpenAiProvider {
     base_url: String,
@@ -19,7 +21,7 @@ impl OpenAiProvider {
     /// Create a provider pointing at the OpenAI API.
     pub fn new_openai(api_key: impl Into<String>, model: impl Into<String>) -> Self {
         Self {
-            base_url: "https://api.openai.com/v1".into(),
+            base_url: OPENAI_API_BASE_URL.into(),
             api_key: api_key.into(),
             default_model: model.into(),
             client: Self::build_client(),
@@ -150,7 +152,7 @@ impl LlmProvider for OpenAiProvider {
         let jsonl = build_batch_jsonl(requests, &self.default_model)?;
 
         let mut config = OpenAIConfig::new().with_api_key(self.api_key.clone());
-        if self.base_url != "https://api.openai.com/v1" {
+        if self.base_url != OPENAI_API_BASE_URL {
             config = config.with_api_base(self.base_url.clone());
         }
         let client = Client::with_config(config);
@@ -194,7 +196,7 @@ impl LlmProvider for OpenAiProvider {
         use tokio_retry::RetryIf;
 
         let mut config = OpenAIConfig::new().with_api_key(self.api_key.clone());
-        if self.base_url != "https://api.openai.com/v1" {
+        if self.base_url != OPENAI_API_BASE_URL {
             config = config.with_api_base(self.base_url.clone());
         }
         let client = Client::with_config(config);
@@ -243,7 +245,7 @@ impl LlmProvider for OpenAiProvider {
         use std::collections::HashMap;
 
         let mut config = OpenAIConfig::new().with_api_key(self.api_key.clone());
-        if self.base_url != "https://api.openai.com/v1" {
+        if self.base_url != OPENAI_API_BASE_URL {
             config = config.with_api_base(self.base_url.clone());
         }
         let client = Client::with_config(config);

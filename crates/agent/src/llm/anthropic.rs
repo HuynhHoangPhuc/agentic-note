@@ -5,8 +5,11 @@ use serde_json::{json, Value};
 use super::{ChatOpts, LlmProvider, Message};
 use std::sync::Arc;
 
+const ANTHROPIC_API_BASE_URL: &str = "https://api.anthropic.com/v1";
+
 /// Anthropic Claude provider.
 pub struct AnthropicProvider {
+    base_url: String,
     api_key: String,
     default_model: String,
     client: reqwest::Client,
@@ -14,7 +17,16 @@ pub struct AnthropicProvider {
 
 impl AnthropicProvider {
     pub fn new(api_key: impl Into<String>, model: impl Into<String>) -> Self {
+        Self::new_custom(ANTHROPIC_API_BASE_URL, api_key, model)
+    }
+
+    pub fn new_custom(
+        base_url: impl Into<String>,
+        api_key: impl Into<String>,
+        model: impl Into<String>,
+    ) -> Self {
         Self {
+            base_url: base_url.into(),
             api_key: api_key.into(),
             default_model: model.into(),
             client: reqwest::Client::builder()
@@ -66,7 +78,7 @@ impl LlmProvider for AnthropicProvider {
 
         let resp = self
             .client
-            .post("https://api.anthropic.com/v1/messages")
+            .post(format!("{}/messages", self.base_url))
             .header("x-api-key", &self.api_key)
             .header("anthropic-version", "2023-06-01")
             .header("Content-Type", "application/json")
@@ -97,6 +109,7 @@ impl LlmProvider for AnthropicProvider {
     /// Concurrent batch execution using `futures::join_all`.
     async fn batch_chat(&self, requests: &[(Vec<Message>, ChatOpts)]) -> Result<Vec<String>> {
         let provider = Arc::new(Self {
+            base_url: self.base_url.clone(),
             api_key: self.api_key.clone(),
             default_model: self.default_model.clone(),
             client: self.client.clone(),

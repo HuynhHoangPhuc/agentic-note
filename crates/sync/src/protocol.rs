@@ -4,13 +4,14 @@
 /// then delegates to merge_driver for the actual merge.
 use std::path::Path;
 
-use agentic_note_cas::{Cas, Snapshot};
+use agentic_note_cas::{restore, Cas, Snapshot};
 use agentic_note_core::error::{AgenticError, Result};
 use agentic_note_core::types::ConflictPolicy;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
-use crate::merge_driver::merge_after_sync;
+use crate::merge_driver::{merge_after_sync, write_conflict_files};
 use crate::transport::{SyncConnection, SyncMessage};
 
 /// Result of a completed sync operation.
@@ -100,13 +101,17 @@ pub async fn run_sync_initiator(
     // Step 2: Send SyncRequest
     conn.send(&SyncMessage::SyncRequest {
         snapshot_id: local_snap.id.clone(),
+        root_tree_id: local_snap.root_tree.clone(),
     })
     .await?;
     debug!("sent SyncRequest");
 
     // Step 3: Receive SyncResponse
-    let remote_snap_id = match conn.recv().await? {
-        SyncMessage::SyncResponse { snapshot_id } => snapshot_id,
+    let (remote_snap_id, remote_root_tree_id) = match conn.recv().await? {
+        SyncMessage::SyncResponse {
+            snapshot_id,
+            root_tree_id,
+        } => (snapshot_id, root_tree_id),
         SyncMessage::Error { message } => {
             return Err(AgenticError::Sync(format!("peer error: {message}")));
         }
@@ -187,7 +192,22 @@ pub async fn run_sync_initiator(
     debug!(count = received_batch.len(), "stored received blobs");
 
     // Step 6: Merge
-    let outcome = merge_after_sync(cas, &ancestor_id, &local_snap.id, &remote_snap_id, policy)?;
+    let outcome = merge_after_sync(
+        cas,
+        &ancestor_id,
+        &local_snap.id,
+        &remote_root_tree_id,
+        policy,
+    )?;
+
+    maybe_restore_merged_vault(cas, vault_path, &outcome.merged_tree, &local_snap.root_tree)?;
+    write_conflict_files(
+        cas,
+        vault_path,
+        &outcome.conflict_paths,
+        &local_snap.id,
+        &remote_root_tree_id,
+    )?;
 
     // Step 7: Create post-sync snapshot
     let post_snap = Snapshot::create(vault_path, cas, Some("post-sync".into()))
@@ -234,8 +254,11 @@ pub async fn run_sync_responder(
         .map_err(|e| AgenticError::Sync(format!("create pre-sync snapshot (responder): {e}")))?;
 
     // Receive SyncRequest
-    let initiator_snap_id = match conn.recv().await? {
-        SyncMessage::SyncRequest { snapshot_id } => snapshot_id,
+    let (initiator_snap_id, initiator_root_tree_id) = match conn.recv().await? {
+        SyncMessage::SyncRequest {
+            snapshot_id,
+            root_tree_id,
+        } => (snapshot_id, root_tree_id),
         other => {
             let _ = conn
                 .send(&SyncMessage::Error {
@@ -249,6 +272,7 @@ pub async fn run_sync_responder(
     // Send SyncResponse
     conn.send(&SyncMessage::SyncResponse {
         snapshot_id: local_snap.id.clone(),
+        root_tree_id: local_snap.root_tree.clone(),
     })
     .await?;
 
@@ -312,8 +336,17 @@ pub async fn run_sync_responder(
         cas,
         &ancestor_id,
         &local_snap.id,
-        &initiator_snap_id,
+        &initiator_root_tree_id,
         policy,
+    )?;
+
+    maybe_restore_merged_vault(cas, vault_path, &outcome.merged_tree, &local_snap.root_tree)?;
+    write_conflict_files(
+        cas,
+        vault_path,
+        &outcome.conflict_paths,
+        &local_snap.id,
+        &initiator_root_tree_id,
     )?;
 
     // Create post-sync snapshot
@@ -341,18 +374,14 @@ pub async fn run_sync_responder(
 /// Find common ancestor snapshot ID.
 /// Heuristic: if one snapshot ID matches a locally stored snapshot, that's the ancestor.
 /// Falls back to empty tree ObjectId when no ancestor found.
-fn find_common_ancestor(cas: &Cas, local_id: &str, remote_id: &str) -> Result<String> {
+fn find_common_ancestor(cas: &Cas, _local_id: &str, remote_id: &str) -> Result<String> {
     let remote_id_owned = remote_id.to_string();
-    let local_id_owned = local_id.to_string();
     // If remote_id is known locally, use it directly as ancestor
     if Snapshot::load(cas, &remote_id_owned).is_ok() {
         return Ok(remote_id_owned);
     }
-    // If local_id matches a snapshot the remote might know, use it
-    if Snapshot::load(cas, &local_id_owned).is_ok() {
-        return Ok(local_id_owned);
-    }
-    // Walk local snapshot history looking for the latest common timestamp
+    // Fall back to local history. This is conservative but safer than assuming
+    // the current local pre-sync snapshot is shared by the remote peer.
     let snapshots = Snapshot::list(cas).unwrap_or_default();
     if let Some(oldest) = snapshots.last() {
         return Ok(oldest.id.clone());
@@ -369,13 +398,79 @@ fn find_common_ancestor(cas: &Cas, local_id: &str, remote_id: &str) -> Result<St
     Ok(empty_id)
 }
 
-/// Collect blob IDs referenced by a snapshot's tree (shallow, root tree only).
-/// Returns root_tree ID as the primary blob to advertise.
+/// Collect blob IDs referenced by a snapshot's tree recursively.
 fn list_snapshot_blobs(cas: &Cas, snapshot_id: &str) -> Result<Vec<String>> {
     let snap = Snapshot::load(cas, &snapshot_id.to_string())
         .map_err(|e| AgenticError::Sync(format!("load snapshot for blob listing: {e}")))?;
-    // Advertise the root tree blob ID; a full implementation would recurse
-    Ok(vec![snap.root_tree])
+    let mut blob_ids = Vec::new();
+    collect_tree_blobs(cas, &snap.root_tree, &mut blob_ids)?;
+    Ok(blob_ids)
+}
+
+fn collect_tree_blobs(cas: &Cas, tree_id: &str, blob_ids: &mut Vec<String>) -> Result<()> {
+    use agentic_note_cas::tree::{EntryType, Tree};
+
+    if !blob_ids.iter().any(|id| id == tree_id) {
+        blob_ids.push(tree_id.to_string());
+    }
+
+    let tree = Tree::load(&cas.blob_store, &tree_id.to_string())
+        .map_err(|e| AgenticError::Sync(format!("load tree {tree_id}: {e}")))?;
+
+    for entry in tree.entries {
+        if !blob_ids.iter().any(|id| id == &entry.hash) {
+            blob_ids.push(entry.hash.clone());
+        }
+        if matches!(entry.entry_type, EntryType::Tree) {
+            collect_tree_blobs(cas, &entry.hash, blob_ids)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn maybe_restore_merged_vault(
+    cas: &Cas,
+    vault_path: &Path,
+    merged_tree_id: &Option<String>,
+    local_tree_id: &str,
+) -> Result<()> {
+    let Some(merged_tree_id) = merged_tree_id else {
+        return Ok(());
+    };
+    if merged_tree_id == local_tree_id {
+        return Ok(());
+    }
+
+    let snapshot_id = crate::protocol::synthetic_snapshot_id(merged_tree_id);
+    persist_snapshot_reference(cas, &snapshot_id, merged_tree_id)?;
+    restore(vault_path, cas, &snapshot_id)
+        .map_err(|e| AgenticError::Sync(format!("restore merged tree: {e}")))?;
+    Ok(())
+}
+
+fn synthetic_snapshot_id(root_tree_id: &str) -> String {
+    agentic_note_cas::hash::hash_bytes(format!("sync-merged-{root_tree_id}").as_bytes())
+}
+
+fn persist_snapshot_reference(cas: &Cas, snapshot_id: &str, root_tree_id: &str) -> Result<()> {
+    let snap_path = cas.snapshots_dir.join(format!("{snapshot_id}.json"));
+    if snap_path.exists() {
+        return Ok(());
+    }
+
+    let snapshot = Snapshot {
+        id: snapshot_id.to_string(),
+        root_tree: root_tree_id.to_string(),
+        timestamp: Utc::now(),
+        device_id: "remote".into(),
+        message: Some("sync-import".into()),
+    };
+    let json = serde_json::to_vec(&snapshot)
+        .map_err(|e| AgenticError::Sync(format!("serialize sync snapshot: {e}")))?;
+    std::fs::write(snap_path, json)
+        .map_err(|e| AgenticError::Sync(format!("persist sync snapshot: {e}")))?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -460,6 +555,7 @@ mod tests {
         let mut mock = MockConnection::new(vec![
             SyncMessage::SyncResponse {
                 snapshot_id: remote_snap_id.clone(),
+                root_tree_id: local_snap.root_tree.clone(),
             },
             SyncMessage::BlobRequest { ids: vec![] },
             SyncMessage::BlobBatch { blobs: vec![] },

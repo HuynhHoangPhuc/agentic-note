@@ -13,6 +13,8 @@ use tracing::{info, warn};
 /// Summary of a completed merge operation.
 #[derive(Debug, Clone)]
 pub struct MergeOutcome {
+    /// Root tree ID of the materialized merge result.
+    pub merged_tree: Option<String>,
     /// Files cleanly merged (no conflict, took local or remote).
     pub merged: usize,
     /// Files auto-resolved by the configured policy.
@@ -69,6 +71,7 @@ pub fn merge_after_sync(
     }
 
     Ok(MergeOutcome {
+        merged_tree: merge_result.merged_tree,
         merged: merge_result.applied.len(),
         auto_resolved: merge_result.auto_resolved.len(),
         conflicts: merge_result.conflicts.len(),
@@ -91,11 +94,21 @@ pub fn write_conflict_files(
     local_id: &str,
     remote_id: &str,
 ) -> Result<()> {
+    let conflict_dir = vault_path.join(".agentic").join("conflicts");
+    if conflict_dir.exists() {
+        for entry in std::fs::read_dir(&conflict_dir)
+            .map_err(|e| AgenticError::Sync(format!("read conflicts dir: {e}")))? {
+            let entry = entry.map_err(|e| AgenticError::Sync(format!("read conflict entry: {e}")))?;
+            let path = entry.path();
+            if path.extension().and_then(|ext| ext.to_str()) == Some("conflict") {
+                std::fs::remove_file(&path)
+                    .map_err(|e| AgenticError::Sync(format!("remove conflict file: {e}")))?;
+            }
+        }
+    }
     if conflict_paths.is_empty() {
         return Ok(());
     }
-
-    let conflict_dir = vault_path.join(".agentic").join("conflicts");
     std::fs::create_dir_all(&conflict_dir)
         .map_err(|e| AgenticError::Sync(format!("create conflicts dir: {e}")))?;
 
@@ -110,10 +123,7 @@ pub fn write_conflict_files(
         let local_content = String::from_utf8_lossy(&local_bytes);
         let remote_content = String::from_utf8_lossy(&remote_bytes);
 
-        let conflict_content = format!(
-            "<<<< LOCAL\n{}\n====\n{}\n>>>> REMOTE\n",
-            local_content, remote_content
-        );
+        let conflict_content = render_conflict_markers(&local_content, &remote_content);
 
         // Use a safe filename: replace '/' with '_'
         let safe_name = path.replace('/', "_");
@@ -125,6 +135,13 @@ pub fn write_conflict_files(
     }
 
     Ok(())
+}
+
+fn render_conflict_markers(local_content: &str, remote_content: &str) -> String {
+    format!(
+        "<<<< LOCAL\n{}\n====\n{}\n>>>> REMOTE\n",
+        local_content, remote_content
+    )
 }
 
 /// Resolve a snapshot ID or tree ID to a tree ObjectId.
@@ -232,5 +249,23 @@ mod tests {
 
         let conflicts_dir = vault.join(".agentic").join("conflicts");
         assert!(conflicts_dir.exists());
+    }
+
+    #[test]
+    fn write_conflict_files_removes_stale_entries() {
+        let dir = TempDir::new().expect("temp dir");
+        let vault = dir.path();
+        let cas = temp_cas(vault);
+        let conflicts_dir = vault.join(".agentic").join("conflicts");
+        std::fs::create_dir_all(&conflicts_dir).expect("create conflicts dir");
+        std::fs::write(conflicts_dir.join("stale.conflict"), b"old").expect("write stale");
+
+        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
+        write_conflict_files(&cas, vault, &[], &snap.id, &snap.id).expect("clear conflict files");
+
+        let entries = std::fs::read_dir(&conflicts_dir)
+            .expect("read conflicts dir")
+            .count();
+        assert_eq!(entries, 0);
     }
 }
