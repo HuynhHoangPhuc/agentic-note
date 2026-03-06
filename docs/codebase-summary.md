@@ -705,11 +705,13 @@ default_provider = "openai"
 
 [llm.providers.openai]
 api_key = "sk-..."
+base_url = "https://api.openai.com"
 model = "gpt-4o"
 temperature = 0.7
 
 [llm.providers.anthropic]
 api_key = "sk-ant-..."
+base_url = "https://api.anthropic.com"
 model = "claude-3-opus-20240229"
 
 [llm.providers.ollama]
@@ -880,4 +882,3 @@ cargo yank --vers 0.1.0        # Yank version
 | New Features | Background indexing, compression, batch sync, semantic merge, scheduling, metrics |
 | Binary Size | ~60 MB (release) |
 | Docs | 100% of public APIs |
-

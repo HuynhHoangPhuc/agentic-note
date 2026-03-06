@@ -9,6 +9,20 @@
 **Code Quality:** Validation commands passing, ready for release prep
 **Major Features:** Double Ratchet forward secrecy, async batch LLM API, expanded tests, CI/release workflows, rustdoc updates, version bump
 
+## Next Milestone: v0.6.0 In Progress
+
+**Focus Areas:** UX polish, integration testing, API stability
+
+**Current Progress:**
+- Phase 36 started: hermetic LLM integration tests landed for OpenAI + Anthropic via custom base URLs and a local mock server
+- Sync protocol coverage expanded: identical peers, one-sided fast-forward, non-conflicting merge, and manual conflict materialization now tested
+- Live LLM validation path added behind `cargo test -p agentic-note-integration-tests --features live-tests`
+- Live test CI workflow added for manual/nightly verification with `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`
+
+**Open Phase 36 Gaps:**
+- 3-peer convergence coverage
+- Structural conflict coverage (for example file↔directory divergence)
+
 ---
 
 ## Completed Phases (8 MVP + 5 v0.2.0)
@@ -976,4 +990,3 @@ cargo bench --release
 - [MCP Specification](https://modelcontextprotocol.io/)
 - [PARA Method](https://fortelabs.com/blog/para/)
 - [Zettelkasten](https://en.wikipedia.org/wiki/Zettelkasten)
-

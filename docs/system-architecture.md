@@ -355,6 +355,7 @@ impl ReviewQueue {
 
 #### 7. **sync** — P2P Sync via iroh (v0.3.0)
 **Purpose:** Peer-to-peer vault synchronization with device identity, conflict resolution, and merge orchestration.
+Manual conflicts are materialized into the working vault when possible, with sidecar entries tracked under `.agentic/conflicts/`.
 
 **Key Modules:**
 - `identity.rs` — Ed25519 device keypair generation and peer ID derivation
@@ -602,11 +603,13 @@ default_provider = "openai"
 
 [llm.providers.openai]
 api_key = "sk-..."
+base_url = "https://api.openai.com"
 model = "gpt-4o"
 temperature = 0.7
 
 [llm.providers.anthropic]
 api_key = "sk-ant-..."
+base_url = "https://api.anthropic.com"
 model = "claude-3-opus-20240229"
 temperature = 0.7
 
@@ -744,4 +747,3 @@ AgenticError (from core)
 4. **Event bus** — Publish/subscribe for pipeline coordination and webhooks
 5. **End-to-end encryption** — Optional E2EE for sync transfers
 6. **Multi-device presence** — Real-time peer discovery and status
-
