@@ -1,8 +1,8 @@
 /// Vault registry: manifest of registered vaults for multi-vault sync.
 ///
-/// Manifest is persisted at `~/.agentic-note/vaults.toml`.
-use agentic_note_core::config::VaultEntry;
-use agentic_note_core::error::{AgenticError, Result};
+/// Manifest is persisted at `~/.zenon/vaults.toml`.
+use zenon_core::config::VaultEntry;
+use zenon_core::error::{AgenticError, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -20,14 +20,14 @@ pub struct VaultRegistry {
 }
 
 impl VaultRegistry {
-    /// Load (or create) the vault registry from `~/.agentic-note/vaults.toml`.
+    /// Load (or create) the vault registry from `~/.zenon/vaults.toml`.
     pub fn load() -> Result<Self> {
         let manifest_path = Self::default_manifest_path()?;
 
         // Create parent directory if it doesn't exist yet.
         if let Some(parent) = manifest_path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| {
-                AgenticError::MultiVault(format!("create ~/.agentic-note dir: {e}"))
+                AgenticError::MultiVault(format!("create ~/.zenon dir: {e}"))
             })?;
         }
 
@@ -112,7 +112,7 @@ impl VaultRegistry {
     fn default_manifest_path() -> Result<PathBuf> {
         let home = dirs::home_dir()
             .ok_or_else(|| AgenticError::MultiVault("cannot resolve home directory".into()))?;
-        Ok(home.join(".agentic-note").join("vaults.toml"))
+        Ok(home.join(".zenon").join("vaults.toml"))
     }
 }
 

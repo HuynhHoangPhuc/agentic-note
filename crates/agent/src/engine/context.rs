@@ -1,5 +1,5 @@
-use agentic_note_core::types::{FrontMatter, NoteId};
-use agentic_note_vault::Note;
+use zenon_core::types::{FrontMatter, NoteId};
+use zenon_vault::Note;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -44,7 +44,7 @@ impl StageContext {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use agentic_note_core::types::{NoteId, NoteStatus, ParaCategory};
+    use zenon_core::types::{NoteId, NoteStatus, ParaCategory};
     use chrono::Utc;
 
     fn dummy_frontmatter() -> FrontMatter {

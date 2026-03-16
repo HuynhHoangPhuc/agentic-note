@@ -13,7 +13,7 @@ pub use zettelkasten_linker::ZettelkastenLinker;
 use crate::engine::AgentSpace;
 use crate::llm::LlmProvider;
 use crate::plugin::{discover_plugins, PluginAgent};
-use agentic_note_search::SearchEngine;
+use zenon_search::SearchEngine;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
@@ -38,7 +38,7 @@ pub fn register_builtin_agents(
 pub fn register_plugins(
     space: &mut AgentSpace,
     plugins_dir: &Path,
-) -> agentic_note_core::Result<usize> {
+) -> zenon_core::Result<usize> {
     let plugins = discover_plugins(plugins_dir)?;
     let count = plugins.len();
     for (manifest, dir) in plugins {

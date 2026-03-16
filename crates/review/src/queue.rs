@@ -1,4 +1,4 @@
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use chrono::Utc;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};

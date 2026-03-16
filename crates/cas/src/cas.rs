@@ -1,9 +1,9 @@
 use crate::blob::BlobStore;
-use agentic_note_core::Result;
+use zenon_core::Result;
 use std::path::{Path, PathBuf};
 
 /// Top-level CAS facade.
-/// All state lives under `{vault}/.agentic/cas/`.
+/// All state lives under `{vault}/.zenon/cas/`.
 pub struct Cas {
     pub blob_store: BlobStore,
     pub snapshots_dir: PathBuf,
@@ -12,14 +12,14 @@ pub struct Cas {
 
 impl Cas {
     /// Open (or initialise) a CAS instance rooted at `vault_path`.
-    /// Creates `.agentic/cas/objects/` and `.agentic/cas/snapshots/` if absent.
+    /// Creates `.zenon/cas/objects/` and `.zenon/cas/snapshots/` if absent.
     ///
     /// # Errors
     ///
     /// Returns an error if the CAS directories cannot be created or the device
     /// ID cannot be persisted.
     pub fn open(vault_path: &Path) -> Result<Self> {
-        let cas_dir = vault_path.join(".agentic").join("cas");
+        let cas_dir = vault_path.join(".zenon").join("cas");
         let objects_dir = cas_dir.join("objects");
         let snapshots_dir = cas_dir.join("snapshots");
 

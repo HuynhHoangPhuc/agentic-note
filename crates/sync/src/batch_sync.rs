@@ -5,9 +5,9 @@
 /// iteration with per-peer error isolation rather than tokio::spawn parallelism.
 use std::time::{Duration, Instant};
 
-use agentic_note_cas::Cas;
-use agentic_note_core::error::Result;
-use agentic_note_core::types::ConflictPolicy;
+use zenon_cas::Cas;
+use zenon_core::error::Result;
+use zenon_core::types::ConflictPolicy;
 
 use crate::protocol::{self, SyncResult};
 use crate::transport::SyncTransport;

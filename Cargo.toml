@@ -70,14 +70,14 @@ async-openai = "0.27"
 tokio-retry = "0.3"
 proptest = "1"
 
-agentic-note-core = { path = "crates/core", version = "0.5.0" }
-agentic-note-vault = { path = "crates/vault", version = "0.5.0" }
-agentic-note-cas = { path = "crates/cas", version = "0.5.0" }
-agentic-note-search = { path = "crates/search", version = "0.5.0" }
-agentic-note-agent = { path = "crates/agent", version = "0.5.0" }
-agentic-note-review = { path = "crates/review", version = "0.5.0" }
-agentic-note-sync = { path = "crates/sync", version = "0.5.0" }
-agentic-note-cli = { path = "crates/cli", version = "0.5.0" }
+zenon-core = { path = "crates/core", version = "0.5.0" }
+zenon-vault = { path = "crates/vault", version = "0.5.0" }
+zenon-cas = { path = "crates/cas", version = "0.5.0" }
+zenon-search = { path = "crates/search", version = "0.5.0" }
+zenon-agent = { path = "crates/agent", version = "0.5.0" }
+zenon-review = { path = "crates/review", version = "0.5.0" }
+zenon-sync = { path = "crates/sync", version = "0.5.0" }
+zenon-cli = { path = "crates/cli", version = "0.5.0" }
 
 [profile.release]
 lto = "thin"

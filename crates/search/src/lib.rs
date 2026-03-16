@@ -17,9 +17,9 @@ pub mod hybrid;
 #[cfg(feature = "embeddings")]
 pub mod model_download;
 
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::NoteId;
-use agentic_note_vault::{markdown, Note};
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::NoteId;
+use zenon_vault::{markdown, Note};
 use rusqlite::Connection;
 use std::path::{Path, PathBuf};
 
@@ -31,9 +31,9 @@ pub use graph::Graph;
 /// # Examples
 ///
 /// ```no_run
-/// use agentic_note_search::SearchEngine;
+/// use zenon_search::SearchEngine;
 /// # use std::path::Path;
-/// # fn main() -> agentic_note_core::Result<()> {
+/// # fn main() -> zenon_core::Result<()> {
 /// let engine = SearchEngine::open(Path::new("/path/to/vault"))?;
 /// let _results = engine.search_fts("query", 10)?;
 /// # Ok(()) }
@@ -54,7 +54,7 @@ impl SearchEngine {
     ///
     /// Returns an error if the index directory or SQLite database cannot be created.
     pub fn open(vault_path: &Path) -> Result<Self> {
-        let agentic_dir = vault_path.join(".agentic");
+        let agentic_dir = vault_path.join(".zenon");
         std::fs::create_dir_all(&agentic_dir)?;
 
         let index_dir = agentic_dir.join("tantivy");

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::error::{AgenticError, Result};
 use crate::types::{ConflictPolicy, ErrorPolicy};
 
-/// Top-level application configuration from `.agentic/config.toml`.
+/// Top-level application configuration from `.zenon/config.toml`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     #[serde(default)]
@@ -210,7 +210,7 @@ pub struct PluginsConfig {
 }
 
 fn default_plugins_dir() -> PathBuf {
-    PathBuf::from(".agentic/plugins")
+    PathBuf::from(".zenon/plugins")
 }
 
 fn default_timeout_secs() -> u64 {
@@ -431,8 +431,8 @@ impl Default for WasmConfig {
 }
 
 impl AppConfig {
-    /// Load config from `.agentic/config.toml` relative to vault path.
-    /// Resolution order: explicit path > AGENTIC_NOTE_VAULT env > current dir.
+    /// Load config from `.zenon/config.toml` relative to vault path.
+    /// Resolution order: explicit path > ZENON_VAULT env > current dir.
     pub fn load(path: Option<PathBuf>) -> Result<Self> {
         let config_path = Self::resolve_config_path(path)?;
         let content = std::fs::read_to_string(&config_path).map_err(|e| {
@@ -447,7 +447,7 @@ impl AppConfig {
         if let Some(p) = explicit {
             return Ok(p);
         }
-        if let Ok(env_path) = std::env::var("AGENTIC_NOTE_VAULT") {
+        if let Ok(env_path) = std::env::var("ZENON_VAULT") {
             return Ok(PathBuf::from(env_path));
         }
         std::env::current_dir().map_err(|e| AgenticError::Config(format!("cannot get cwd: {e}")))
@@ -455,7 +455,7 @@ impl AppConfig {
 
     fn resolve_config_path(explicit: Option<PathBuf>) -> Result<PathBuf> {
         let vault = Self::resolve_vault_path(explicit)?;
-        Ok(vault.join(".agentic").join("config.toml"))
+        Ok(vault.join(".zenon").join("config.toml"))
     }
 }
 

@@ -1,4 +1,4 @@
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;

@@ -1,6 +1,6 @@
 use crate::blob::BlobStore;
 use crate::hash::ObjectId;
-use agentic_note_core::Result;
+use zenon_core::Result;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -28,7 +28,7 @@ pub struct Tree {
 impl Tree {
     /// Recursively walk `dir`, storing all file blobs, building tree objects,
     /// and returning the top-level `Tree` together with its stored `ObjectId`.
-    /// `exclude` is a list of directory/file names to skip (e.g. `[".agentic"]`).
+    /// `exclude` is a list of directory/file names to skip (e.g. `[".zenon"]`).
     pub fn from_dir(dir: &Path, store: &BlobStore, exclude: &[&str]) -> Result<(Tree, ObjectId)> {
         let mut entries: Vec<TreeEntry> = Vec::new();
 
@@ -72,7 +72,7 @@ impl Tree {
 
         let tree = Tree { entries };
         let json = serde_json::to_vec(&tree)
-            .map_err(|e| agentic_note_core::AgenticError::Parse(e.to_string()))?;
+            .map_err(|e| zenon_core::AgenticError::Parse(e.to_string()))?;
         let tree_id = store.store(&json)?;
         Ok((tree, tree_id))
     }
@@ -81,7 +81,7 @@ impl Tree {
     pub fn load(store: &BlobStore, id: &ObjectId) -> Result<Tree> {
         let data = store.load(id)?;
         serde_json::from_slice(&data)
-            .map_err(|e| agentic_note_core::AgenticError::Parse(e.to_string()))
+            .map_err(|e| zenon_core::AgenticError::Parse(e.to_string()))
     }
 }
 

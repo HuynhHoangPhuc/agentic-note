@@ -1,4 +1,4 @@
-use agentic_note_core::Result;
+use zenon_core::Result;
 use sha2::{Digest, Sha256};
 use std::io::Read;
 use std::path::Path;

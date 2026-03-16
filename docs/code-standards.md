@@ -1,8 +1,8 @@
-# Agentic-Note: Code Standards & Development Guidelines
+# zenon: Code Standards & Development Guidelines
 
 ## Overview
 
-This document establishes coding standards, architectural patterns, and development practices for the agentic-note Rust codebase. All contributors must follow these guidelines to maintain consistency, readability, and maintainability.
+This document establishes coding standards, architectural patterns, and development practices for the zenon Rust codebase. All contributors must follow these guidelines to maintain consistency, readability, and maintainability.
 
 ---
 
@@ -29,7 +29,7 @@ This document establishes coding standards, architectural patterns, and developm
 
 ### Workspace Layout
 ```
-agentic-note/                          # Cargo workspace root
+zenon/                          # Cargo workspace root
 ├── Cargo.toml                         # Workspace manifest with shared dependencies
 ├── Cargo.lock                         # Lock file (committed)
 ├── crates/
@@ -145,7 +145,7 @@ pub use types::{MyType, AnotherType};
 
 | Item | Convention | Example |
 |------|-----------|---------|
-| Crates | snake_case | `agentic-note-core` |
+| Crates | snake_case | `zenon-core` |
 | Modules | snake_case | `para_classifier` |
 | Types (struct/enum) | PascalCase | `NoteId`, `ParaCategory` |
 | Constants | SCREAMING_SNAKE_CASE | `MAX_PIPELINE_STAGES` |
@@ -159,7 +159,7 @@ pub use types::{MyType, AnotherType};
 **Custom Error Type (from core):**
 ```rust
 use thiserror::Error;
-use agentic_note_core::{AgenticError, Result};
+use zenon_core::{AgenticError, Result};
 
 #[derive(Error, Debug)]
 pub enum VaultError {
@@ -291,7 +291,7 @@ pub struct FrontMatter {
 /// # Examples
 ///
 /// ```
-/// use agentic_note_core::NoteId;
+/// use zenon_core::NoteId;
 /// let id = NoteId::new();
 /// println!("{}", id);
 /// ```
@@ -420,7 +420,7 @@ impl SearchEngine {
 **Using clap:**
 ```rust
 #[derive(Parser)]
-#[command(name = "agentic-note", about = "Local-first note-taking")]
+#[command(name = "zenon", about = "Local-first note-taking")]
 struct Cli {
     #[arg(long, global = true)]
     vault: Option<PathBuf>,

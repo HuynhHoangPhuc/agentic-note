@@ -1,9 +1,9 @@
-use agentic_note_cas::{Cas, Snapshot};
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::ConflictPolicy;
-use agentic_note_sync::protocol::{run_sync_initiator, run_sync_responder};
-use agentic_note_sync::transport::{SyncConnection, SyncMessage};
-use agentic_note_test_utils::TempVault;
+use zenon_cas::{Cas, Snapshot};
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::ConflictPolicy;
+use zenon_sync::protocol::{run_sync_initiator, run_sync_responder};
+use zenon_sync::transport::{SyncConnection, SyncMessage};
+use zenon_test_utils::TempVault;
 use async_trait::async_trait;
 use std::path::Path;
 use tokio::sync::mpsc;
@@ -231,7 +231,7 @@ fn assert_note_contains(vault_root: &Path, rel_path: &str, expected_fragment: &s
 }
 
 fn assert_conflict_file(vault_root: &Path, name: &str) -> Result<()> {
-    let path = vault_root.join(".agentic").join("conflicts").join(name);
+    let path = vault_root.join(".zenon").join("conflicts").join(name);
     if !path.exists() {
         return Err(AgenticError::Io(std::io::Error::new(
             std::io::ErrorKind::NotFound,

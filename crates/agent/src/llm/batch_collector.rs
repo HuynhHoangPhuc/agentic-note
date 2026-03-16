@@ -3,7 +3,7 @@
 /// Callers `add` requests to the collector and receive a `RequestId`. After
 /// all requests are registered, `flush` executes the unique set concurrently,
 /// returning a map from each `RequestId` to the corresponding response string.
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
 

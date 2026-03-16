@@ -1,7 +1,7 @@
-use agentic_note_cas::merge::three_way_merge;
-use agentic_note_cas::tree::{EntryType, Tree, TreeEntry};
-use agentic_note_cas::BlobStore;
-use agentic_note_core::types::ConflictPolicy;
+use zenon_cas::merge::three_way_merge;
+use zenon_cas::tree::{EntryType, Tree, TreeEntry};
+use zenon_cas::BlobStore;
+use zenon_core::types::ConflictPolicy;
 use proptest::prelude::*;
 use tempfile::TempDir;
 

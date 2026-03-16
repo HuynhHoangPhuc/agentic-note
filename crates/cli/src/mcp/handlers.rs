@@ -1,9 +1,9 @@
 /// Tool call dispatch for MCP `tools/call` method.
-use agentic_note_agent::plugin;
-use agentic_note_core::config::AppConfig;
-use agentic_note_core::types::{NoteStatus, ParaCategory};
-use agentic_note_search::SearchEngine;
-use agentic_note_vault::{init_vault, Note, NoteFilter, Vault};
+use zenon_agent::plugin;
+use zenon_core::config::AppConfig;
+use zenon_core::types::{NoteStatus, ParaCategory};
+use zenon_search::SearchEngine;
+use zenon_vault::{init_vault, Note, NoteFilter, Vault};
 use serde_json::Value;
 use std::path::Path;
 

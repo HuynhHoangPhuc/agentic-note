@@ -1,5 +1,5 @@
 [package]
-name = "agentic-note-core"
+name = "zenon-core"
 version = "0.5.0"
 edition = "2021"
 
@@ -24,4 +24,4 @@ tokio = { workspace = true }
 sqlx = { workspace = true, optional = true }
 
 [dev-dependencies]
-agentic-note-test-utils = { path = "../test-utils" }
+zenon-test-utils = { path = "../test-utils" }

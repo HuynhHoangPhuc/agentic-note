@@ -3,7 +3,7 @@
 //! Loads .wasm modules, executes them with fuel metering and memory limits,
 //! passes JSON input/output through linear memory.
 
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

@@ -1,7 +1,7 @@
 use crate::blob::BlobStore;
 use crate::hash::ObjectId;
 use crate::tree::{EntryType, Tree};
-use agentic_note_core::Result;
+use zenon_core::Result;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

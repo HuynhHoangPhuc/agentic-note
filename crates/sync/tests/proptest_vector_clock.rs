@@ -1,8 +1,8 @@
-use agentic_note_cas::Cas;
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::ConflictPolicy;
-use agentic_note_sync::batch_sync::sync_all_peers;
-use agentic_note_sync::transport::{SyncConnection, SyncMessage, SyncTransport};
+use zenon_cas::Cas;
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::ConflictPolicy;
+use zenon_sync::batch_sync::sync_all_peers;
+use zenon_sync::transport::{SyncConnection, SyncMessage, SyncTransport};
 use proptest::prelude::*;
 use std::path::Path;
 

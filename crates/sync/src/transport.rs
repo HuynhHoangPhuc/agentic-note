@@ -1,4 +1,4 @@
-use agentic_note_core::error::Result;
+use zenon_core::error::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 

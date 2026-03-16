@@ -1,4 +1,4 @@
-# agentic-note
+# zenon
 
 Local-first agentic note-taking app in Rust. CLI + MCP server with PARA/Zettelkasten organization, CAS versioning, and AgentSpace pipelines.
 
@@ -23,24 +23,24 @@ Local-first agentic note-taking app in Rust. CLI + MCP server with PARA/Zettelka
 cargo build --release
 
 # Initialize a vault
-agentic-note init ~/notes
+zenon init ~/notes
 
 # Create a note
-agentic-note --vault ~/notes note create --title "My First Note" --para inbox --tags rust,cli
+zenon --vault ~/notes note create --title "My First Note" --para inbox --tags rust,cli
 
 # List notes
-agentic-note --vault ~/notes note list
+zenon --vault ~/notes note list
 
 # Search
-agentic-note --vault ~/notes note list --para inbox
+zenon --vault ~/notes note list --para inbox
 
 # JSON output (for scripts/agents)
-agentic-note --vault ~/notes note list --json
+zenon --vault ~/notes note list --json
 ```
 
 ## Configuration
 
-Config lives at `<vault>/.agentic/config.toml`:
+Config lives at `<vault>/.zenon/config.toml`:
 
 ```toml
 [vault]
@@ -77,7 +77,7 @@ Cargo workspace with 7 crates:
 Start the MCP server for AI assistant integration:
 
 ```bash
-agentic-note --vault ~/notes mcp serve
+zenon --vault ~/notes mcp serve
 ```
 
 Available tools: `note/create`, `note/read`, `note/list`, `note/search`, `vault/init`, `vault/status`

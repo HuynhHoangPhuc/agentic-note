@@ -1,8 +1,8 @@
-# Agentic-Note: System Architecture
+# zenon: System Architecture
 
 ## Overview
 
-Agentic-note is a modular, local-first Rust application designed as a Cargo workspace with 8 specialized crates. Each crate has a single responsibility and communicates through well-defined interfaces. This document describes the architecture, crate relationships, and data flow for v0.4.0 and beyond.
+zenon is a modular, local-first Rust application designed as a Cargo workspace with 8 specialized crates. Each crate has a single responsibility and communicates through well-defined interfaces. This document describes the architecture, crate relationships, and data flow for v0.4.0 and beyond.
 
 ---
 
@@ -205,9 +205,9 @@ impl SearchEngine {
 ```
 
 **Storage:**
-- **FTS Index:** tantivy inverted index in `.agentic/tantivy/`
-- **Embeddings:** ONNX model in `~/.cache/agentic-note/models/` (auto-downloaded)
-- **Graph DB:** SQLite tables in `.agentic/index.db` for tags, links, embeddings
+- **FTS Index:** tantivy inverted index in `.zenon/tantivy/`
+- **Embeddings:** ONNX model in `~/.cache/zenon/models/` (auto-downloaded)
+- **Graph DB:** SQLite tables in `.zenon/index.db` for tags, links, embeddings
 
 **Search Modes:**
 - **FTS:** Keyword-based (default, always available)
@@ -291,7 +291,7 @@ pub trait LlmProvider: Send + Sync {
 **Plugin System:**
 - Manifest-driven: `plugin.toml` with name, version, executable, timeout
 - Subprocess execution: JSON-RPC over stdio
-- Discovery: auto-scan `~/.agentic/plugins/` or specified directories
+- Discovery: auto-scan `~/.zenon/plugins/` or specified directories
 
 **DAG Pipeline Execution:**
 ```
@@ -349,13 +349,13 @@ impl ReviewQueue {
 - **Review:** Selected stages queued, others auto-approved
 - **Auto:** All changes auto-approved (safe agents only)
 
-**Storage:** SQLite table in `.agentic/index.db`
+**Storage:** SQLite table in `.zenon/index.db`
 
 ---
 
 #### 7. **sync** — P2P Sync via iroh (v0.3.0)
 **Purpose:** Peer-to-peer vault synchronization with device identity, conflict resolution, and merge orchestration.
-Manual conflicts are materialized into the working vault when possible, with sidecar entries tracked under `.agentic/conflicts/`.
+Manual conflicts are materialized into the working vault when possible, with sidecar entries tracked under `.zenon/conflicts/`.
 
 **Key Modules:**
 - `identity.rs` — Ed25519 device keypair generation and peer ID derivation
@@ -436,34 +436,34 @@ Peer A                         Peer B
 **CLI Commands:**
 ```bash
 # Vault & Notes
-agentic-note init ~/vault              # Initialize vault
-agentic-note note create --title "My Note" --para inbox --tags rust,cli
-agentic-note note list [--para <PARA>] [--tags <TAGS>]
-agentic-note note search <QUERY> [--mode hybrid]
-agentic-note note read <NOTE_ID>
+zenon init ~/vault              # Initialize vault
+zenon note create --title "My Note" --para inbox --tags rust,cli
+zenon note list [--para <PARA>] [--tags <TAGS>]
+zenon note search <QUERY> [--mode hybrid]
+zenon note read <NOTE_ID>
 
 # Device & Sync
-agentic-note device init               # Generate Ed25519 identity
-agentic-note device show               # Display peer ID
-agentic-note device pair <PEER_ID> [--name "Device Name"]
-agentic-note device list               # Show known devices
-agentic-note device unpair <PEER_ID>   # Remove peer
-agentic-note sync now [--peer <PEER_ID>] [--policy newest-wins]
-agentic-note sync now --all            # Batch sync all peers (NEW v0.3.0)
-agentic-note sync status               # Check sync state
+zenon device init               # Generate Ed25519 identity
+zenon device show               # Display peer ID
+zenon device pair <PEER_ID> [--name "Device Name"]
+zenon device list               # Show known devices
+zenon device unpair <PEER_ID>   # Remove peer
+zenon sync now [--peer <PEER_ID>] [--policy newest-wins]
+zenon sync now --all            # Batch sync all peers (NEW v0.3.0)
+zenon sync status               # Check sync state
 
 # Plugins
-agentic-note plugin list               # Show installed plugins
-agentic-note plugin run <PLUGIN> [--config <TOML>]
+zenon plugin list               # Show installed plugins
+zenon plugin run <PLUGIN> [--config <TOML>]
 
 # Scheduling & Metrics (NEW v0.3.0)
-agentic-note pipeline status           # Show scheduled pipelines
-agentic-note metrics show              # Display collected metrics
-agentic-note metrics reset             # Clear metrics
+zenon pipeline status           # Show scheduled pipelines
+zenon metrics show              # Display collected metrics
+zenon metrics reset             # Clear metrics
 
 # Configuration
-agentic-note config show               # Display config
-agentic-note mcp serve                 # Start MCP server
+zenon config show               # Display config
+zenon mcp serve                 # Start MCP server
 ```
 
 **MCP Server Tools:**
@@ -583,7 +583,7 @@ Output (JSON or formatted table)
 ├── archives/
 ├── inbox/
 ├── zettelkasten/
-└── .agentic/
+└── .zenon/
     ├── config.toml          # Main config
     ├── index.db             # SQLite (FTS + graph + review queue)
     ├── tantivy/             # tantivy index directory

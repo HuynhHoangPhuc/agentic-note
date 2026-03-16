@@ -1,8 +1,8 @@
 /// Sync CLI commands: now, status, all-vaults.
 ///
 /// Named sync_cmd.rs to avoid collision with Rust's `sync` built-in module.
-use agentic_note_core::types::ConflictPolicy;
-use agentic_note_sync::{DeviceRegistry, SyncEngine, VaultRegistry};
+use zenon_core::types::ConflictPolicy;
+use zenon_sync::{DeviceRegistry, SyncEngine, VaultRegistry};
 use clap::Subcommand;
 use std::path::Path;
 
@@ -35,7 +35,7 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
 
             if all {
                 // Batch sync with all registered peers
-                let agentic_dir = vault_path.join(".agentic");
+                let agentic_dir = vault_path.join(".zenon");
                 let registry_path = agentic_dir.join("devices.json");
                 let registry = DeviceRegistry::load(&registry_path)?;
                 let peer_ids: Vec<String> =
@@ -54,7 +54,7 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
                 }
 
                 let engine = SyncEngine::new_with_iroh(vault_path).await?;
-                let result = agentic_note_sync::batch_sync::sync_all_peers(
+                let result = zenon_sync::batch_sync::sync_all_peers(
                     engine.transport.as_ref(),
                     &engine.cas,
                     vault_path,
@@ -92,11 +92,11 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
                         println!("{}", "-".repeat(52));
                         for o in &result.outcomes {
                             let status = match &o.status {
-                                agentic_note_sync::PeerSyncStatus::Success => "OK".to_string(),
-                                agentic_note_sync::PeerSyncStatus::Failed(e) => {
+                                zenon_sync::PeerSyncStatus::Success => "OK".to_string(),
+                                zenon_sync::PeerSyncStatus::Failed(e) => {
                                     format!("FAIL: {}", &e[..e.len().min(20)])
                                 }
-                                agentic_note_sync::PeerSyncStatus::Skipped(r) => {
+                                zenon_sync::PeerSyncStatus::Skipped(r) => {
                                     format!("SKIP: {}", &r[..r.len().min(20)])
                                 }
                             };
@@ -135,7 +135,7 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
                         println!("  Auto-resolved: {}", result.auto_resolved);
                         if result.conflicts > 0 {
                             println!(
-                                "  Conflicts:     {} (see .agentic/conflicts/)",
+                                "  Conflicts:     {} (see .zenon/conflicts/)",
                                 result.conflicts
                             );
                         } else {
@@ -150,12 +150,12 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
         }
 
         SyncCmd::Status => {
-            let agentic_dir = vault_path.join(".agentic");
+            let agentic_dir = vault_path.join(".zenon");
             let registry_path = agentic_dir.join("devices.json");
             let registry = DeviceRegistry::load(&registry_path)?;
 
             // Check for pending conflict files
-            let conflict_dir = vault_path.join(".agentic").join("conflicts");
+            let conflict_dir = vault_path.join(".zenon").join("conflicts");
             let pending_conflicts: Vec<String> = if conflict_dir.exists() {
                 std::fs::read_dir(&conflict_dir)
                     .map(|entries| {
@@ -212,7 +212,7 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
                     } else {
                         println!("Pending conflicts ({}):", pending_conflicts.len());
                         for f in &pending_conflicts {
-                            println!("  .agentic/conflicts/{f}");
+                            println!("  .zenon/conflicts/{f}");
                         }
                         println!("Resolve conflicts then delete the .conflict files.");
                     }
@@ -222,7 +222,7 @@ pub async fn run(cmd: SyncCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::
 
         SyncCmd::AllVaults => {
             let registry = VaultRegistry::load()?;
-            let results = agentic_note_sync::sync_all_vaults(&registry).await?;
+            let results = zenon_sync::sync_all_vaults(&registry).await?;
 
             match fmt {
                 OutputFormat::Json => {

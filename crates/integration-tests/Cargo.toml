@@ -1,5 +1,5 @@
 [package]
-name = "agentic-note-integration-tests"
+name = "zenon-integration-tests"
 version = "0.5.0"
 edition = "2021"
 
@@ -11,15 +11,15 @@ rustdoc-args = ["--cfg", "docsrs"]
 live-tests = []
 
 [dependencies]
-agentic-note-core = { workspace = true }
-agentic-note-vault = { workspace = true }
-agentic-note-cas = { workspace = true }
-agentic-note-search = { workspace = true }
-agentic-note-agent = { workspace = true }
-agentic-note-review = { workspace = true }
-agentic-note-sync = { workspace = true }
-agentic-note-cli = { workspace = true }
-agentic-note-test-utils = { path = "../test-utils" }
+zenon-core = { workspace = true }
+zenon-vault = { workspace = true }
+zenon-cas = { workspace = true }
+zenon-search = { workspace = true }
+zenon-agent = { workspace = true }
+zenon-review = { workspace = true }
+zenon-sync = { workspace = true }
+zenon-cli = { workspace = true }
+zenon-test-utils = { path = "../test-utils" }
 serde_json = { workspace = true }
 tempfile = "3"
 tokio = { workspace = true }

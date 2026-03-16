@@ -1,11 +1,11 @@
-# Agentic-Note: Codebase Summary
+# zenon: Codebase Summary
 
 ## Quick Reference
 
-**Project:** agentic-note — Local-first agentic note-taking Rust CLI + MCP server
+**Project:** zenon — Local-first agentic note-taking Rust CLI + MCP server
 **Version:** 0.5.0 (Quality & Polish)
 **Status:** ✅ All 8 core crates plus test support crates; forward secrecy, async batch API, expanded integration/property tests, CI/release workflows, rustdoc improvements
-**Repository:** `/Users/phuc/Developer/agentic-note`
+**Repository:** `/home/phuc/Projects/agentic-note`
 **Language:** Rust (Edition 2021)
 **Build:** `cargo build --release`
 **Test:** `cargo test` (35+ tests passing, 0 warnings)
@@ -16,7 +16,7 @@
 ## Directory Structure Overview
 
 ```
-agentic-note/
+zenon/
 ├── Cargo.toml                    # Workspace manifest (10 crates incl. test support)
 ├── Cargo.lock                    # Locked dependencies
 ├── README.md                     # Quick start guide
@@ -224,7 +224,7 @@ Cas::three_way_merge(base, mine, theirs) → Result<MergeResult>  // Merge
 
 **Storage Structure:**
 ```
-.agentic/cas/
+.zenon/cas/
 ├── blobs/
 │   ├── abc123... (SHA-256 blob file)
 │   ├── def456...
@@ -264,7 +264,7 @@ SearchEngine::get_orphaned_notes() → Result<Vec<NoteId>>  // Orphaned notes
 
 **Storage Structure:**
 ```
-.agentic/
+.zenon/
 ├── tantivy/           # FTS index
 ├── index.db           # SQLite (graph + review queue)
 ```
@@ -322,7 +322,7 @@ pub struct DagExecutor {
 **Plugin System (NEW):**
 - Manifest-driven: `plugin.toml` declares name, version, executable, timeout
 - Subprocess execution: JSON-RPC over stdin/stdout
-- Auto-discovery: `~/.agentic/plugins/` or custom paths
+- Auto-discovery: `~/.zenon/plugins/` or custom paths
 - Custom agents can be loaded as plugins without recompilation
 
 **LLM Providers:**
@@ -376,7 +376,7 @@ ReviewQueue::reject(item_id) → Result<()>                 // Reject change
 gate(item, trust_level, queue) → Result<GateResult>       // Approval logic
 ```
 
-**Storage:** SQLite table in `.agentic/index.db`
+**Storage:** SQLite table in `.zenon/index.db`
 
 **Trust Levels:**
 - **Manual:** All changes queued, require explicit approval
@@ -430,8 +430,8 @@ sync.sync_with_peer(peer_id, conflict_policy) → Result<MergeOutcome>
 7. Apply changes to respective vaults
 
 **Storage:**
-- **Identity:** `.agentic/identity.key` (Ed25519 secret key)
-- **Devices:** `.agentic/devices.json` (known peers)
+- **Identity:** `.zenon/identity.key` (Ed25519 secret key)
+- **Devices:** `.zenon/devices.json` (known peers)
 - **CAS:** Used for merge operations (existing)
 
 **Conflict Policies:**
@@ -455,10 +455,10 @@ sync.sync_with_peer(peer_id, conflict_policy) → Result<MergeOutcome>
 
 **Command Structure (v0.3.0):**
 ```
-agentic-note [OPTIONS] <COMMAND>
+zenon [OPTIONS] <COMMAND>
 
 Global Options:
-  --vault <PATH>    Vault location (default: AGENTIC_NOTE_VAULT env or cwd)
+  --vault <PATH>    Vault location (default: ZENON_VAULT env or cwd)
   --json            JSON output mode
   -h, --help        Show help
 
@@ -522,7 +522,7 @@ mcp serve              # Start MCP JSON-RPC server
 **Output Modes:**
 - **Human:** Formatted text, tables, colors → stdout
 - **JSON:** JSON objects → stdout
-- **Logs:** Structured tracing → stderr (AGENTIC_LOG env)
+- **Logs:** Structured tracing → stderr (ZENON_LOG env)
 
 **Key Design (v0.2.0):**
 - Device identity management (Ed25519)
@@ -692,7 +692,7 @@ pub fn operation() -> Result<T> {
 
 ### config.toml Location
 ```
-<vault-root>/.agentic/config.toml
+<vault-root>/.zenon/config.toml
 ```
 
 ### Configuration Schema
@@ -725,8 +725,8 @@ max_concurrent_pipelines = 1
 
 ### Environment Variables
 ```bash
-AGENTIC_NOTE_VAULT=/path/to/vault      # Vault location
-AGENTIC_LOG=debug                       # Logging level
+ZENON_VAULT=/path/to/vault             # Vault location
+ZENON_LOG=debug                         # Logging level
 OPENAI_API_KEY=sk-...                  # OpenAI key (override config)
 ANTHROPIC_API_KEY=sk-ant-...           # Anthropic key (override)
 ```

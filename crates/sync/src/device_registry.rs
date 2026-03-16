@@ -1,4 +1,4 @@
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};

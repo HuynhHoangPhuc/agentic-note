@@ -8,9 +8,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-use agentic_note_core::config::IndexerConfig;
-use agentic_note_core::Result;
-use agentic_note_vault::Note;
+use zenon_core::config::IndexerConfig;
+use zenon_core::Result;
+use zenon_vault::Note;
 use notify_debouncer_full::{new_debouncer, DebounceEventResult};
 use tokio::sync::{mpsc, Mutex};
 use tokio::task::JoinHandle;
@@ -220,7 +220,7 @@ async fn flush_batch(
         // Extract note ID from filename (format: "{ulid}-{slug}.md")
         if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
             if let Some(ulid_part) = stem.split('-').next() {
-                if let Ok(note_id) = ulid_part.parse::<agentic_note_core::NoteId>() {
+                if let Ok(note_id) = ulid_part.parse::<zenon_core::NoteId>() {
                     if let Err(e) = engine.remove_note(&note_id) {
                         warn!("Failed to remove index for {}: {e}", path.display());
                     }

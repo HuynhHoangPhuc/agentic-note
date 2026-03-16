@@ -1,4 +1,4 @@
-use agentic_note_cas::hash::hash_bytes;
+use zenon_cas::hash::hash_bytes;
 use proptest::prelude::*;
 
 proptest! {

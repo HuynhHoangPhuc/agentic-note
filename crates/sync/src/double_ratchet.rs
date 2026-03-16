@@ -1,4 +1,4 @@
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use bincode;
 use chacha20poly1305::aead::{Aead, KeyInit};
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
@@ -108,7 +108,7 @@ impl ksi_double_ratchet::CryptoProvider for DrCryptoProvider {
     ) -> (Self::RootKey, Self::ChainKey) {
         let hk = Hkdf::<Sha256>::new(Some(root_key), shared_secret.as_bytes());
         let mut okm = [0u8; 64];
-        if hk.expand(b"agentic-note-dr-rk", &mut okm).is_err() {
+        if hk.expand(b"zenon-dr-rk", &mut okm).is_err() {
             return ([0u8; 32], [0u8; 32]);
         }
         let mut next_root = [0u8; 32];
@@ -121,7 +121,7 @@ impl ksi_double_ratchet::CryptoProvider for DrCryptoProvider {
     fn kdf_ck(chain_key: &Self::ChainKey) -> (Self::ChainKey, Self::MessageKey) {
         let hk = Hkdf::<Sha256>::new(None, chain_key);
         let mut okm = [0u8; 64];
-        if hk.expand(b"agentic-note-dr-ck", &mut okm).is_err() {
+        if hk.expand(b"zenon-dr-ck", &mut okm).is_err() {
             return ([0u8; 32], [0u8; 32]);
         }
         let mut next_chain = [0u8; 32];
@@ -362,7 +362,7 @@ fn derive_shared_secret(peer_public: &PublicKey) -> [u8; 32] {
     let shared = secret.diffie_hellman(peer_public);
     let hk = Hkdf::<Sha256>::new(None, shared.as_bytes());
     let mut okm = [0u8; 32];
-    if hk.expand(b"agentic-note-x3dh", &mut okm).is_err() {
+    if hk.expand(b"zenon-x3dh", &mut okm).is_err() {
         return [0u8; 32];
     }
     okm

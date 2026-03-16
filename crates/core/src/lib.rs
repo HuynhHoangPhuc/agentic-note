@@ -1,4 +1,4 @@
-//! Shared foundation types, error handling, and configuration for agentic-note.
+//! Shared foundation types, error handling, and configuration for zenon.
 //!
 //! Re-exports core domain types, configuration structs, and error handling helpers
 //! used by all other crates in the workspace.

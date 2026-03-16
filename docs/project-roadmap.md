@@ -1,4 +1,4 @@
-# Agentic-Note: Project Roadmap & Development Progress
+# zenon: Project Roadmap & Development Progress
 
 ## Current Status: v0.5.0 Quality & Polish Complete ✅
 
@@ -16,7 +16,7 @@
 **Current Progress:**
 - Phase 36 started: hermetic LLM integration tests landed for OpenAI + Anthropic via custom base URLs and a local mock server
 - Sync protocol coverage expanded: identical peers, one-sided fast-forward, non-conflicting merge, and manual conflict materialization now tested
-- Live LLM validation path added behind `cargo test -p agentic-note-integration-tests --features live-tests`
+- Live LLM validation path added behind `cargo test -p zenon-integration-tests --features live-tests`
 - Live test CI workflow added for manual/nightly verification with `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`
 
 **Open Phase 36 Gaps:**
@@ -358,7 +358,7 @@ vault/status   - Get vault statistics
 **Completion Date:** 2026-02-14
 
 **Deliverables:**
-- [x] New crate: agentic-note-sync (700 LOC)
+- [x] New crate: zenon-sync (700 LOC)
 - [x] Ed25519 device identity generation and persistence
 - [x] Device registry (known peers TOML/JSON)
 - [x] iroh QUIC transport binding
@@ -401,7 +401,7 @@ vault/status   - Get vault statistics
 - [x] EmbeddingIndex (SQLite-backed vector storage)
 - [x] Semantic search via cosine similarity
 - [x] Hybrid search (FTS + semantic combined scoring)
-- [x] Auto-download model to ~/.cache/agentic-note/models/
+- [x] Auto-download model to ~/.cache/zenon/models/
 - [x] Optional feature flag: `embeddings`
 - [x] Search mode parameter: fts|semantic|hybrid
 
@@ -433,7 +433,7 @@ vault/status   - Get vault statistics
 
 **Deliverables:**
 - [x] Plugin manifest (plugin.toml) parsing
-- [x] Plugin discovery (auto-scan ~/.agentic/plugins/)
+- [x] Plugin discovery (auto-scan ~/.zenon/plugins/)
 - [x] Subprocess-based plugin execution
 - [x] JSON-RPC over stdio for plugin communication
 - [x] Plugin timeout configuration
@@ -530,7 +530,7 @@ vault/status   - Get vault statistics
 **Effort Saved:** 10h
 
 **Placeholder Documentation:**
-- See `plans/260213-1610-agentic-note-mvp/phase-06-p2p-sync.md` for design
+- See `plans/260213-1610-zenon-mvp/phase-06-p2p-sync.md` for design
 - Key concepts: CRDT-based sync, iroh adapter layer, conflict-free replicated notes
 
 ---
@@ -709,7 +709,7 @@ vault/status   - Get vault statistics
 - [x] Version bump to 0.2.0 across all 8 crates
 
 **New Crates:**
-- agentic-note-sync (700 LOC): iroh transport, device identity, merge orchestration
+- zenon-sync (700 LOC): iroh transport, device identity, merge orchestration
 
 **Breaking Changes:**
 - Pipeline schema v1 (sequential) still supported, v2 (DAG) with new fields
@@ -718,7 +718,7 @@ vault/status   - Get vault statistics
 
 **Performance:**
 - DAG execution: Parallel stages reduce overall pipeline time
-- Embeddings: Model cached in ~/.cache/agentic-note/models/
+- Embeddings: Model cached in ~/.cache/zenon/models/
 - Sync: iroh QUIC transport optimized
 
 ---
@@ -786,7 +786,7 @@ vault/status   - Get vault statistics
 **Validation:**
 - [x] `cargo check --workspace`
 - [x] `cargo test --workspace`
-- [x] `cargo check -p agentic-note-agent --features batch-api`
+- [x] `cargo check -p zenon-agent --features batch-api`
 - [x] `cargo doc --no-deps --all-features`
 - [x] `cargo test --doc --workspace`
 
@@ -829,10 +829,10 @@ vault/status   - Get vault statistics
 - **API rate limits:** Manual retry on LLM provider limits (batch requests in v0.3)
 
 ### Security Considerations (v0.2.0)
-- **Device identity:** Ed25519 keys in `.agentic/identity.key` (0600 perms)
+- **Device identity:** Ed25519 keys in `.zenon/identity.key` (0600 perms)
 - **API keys:** Stored in config.toml with 0600 perms
 - **Sync peers:** Device registry for trusted-only connections
-- **Log exposure:** Use `AGENTIC_LOG` env var to control levels
+- **Log exposure:** Use `ZENON_LOG` env var to control levels
 - **Ollama:** Local models not exposed over network by default
 - **Plugin code:** No isolation (trust authors, v0.4 will add sandboxing)
 - **Note backups:** Recommend git-based version control

@@ -2,7 +2,7 @@ use clap::Subcommand;
 use std::path::Path;
 
 use crate::output::{print_json, OutputFormat};
-use agentic_note_agent::engine::PipelineScheduler;
+use zenon_agent::engine::PipelineScheduler;
 
 #[derive(Subcommand)]
 pub enum PipelineCmd {

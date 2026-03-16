@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use tokio_util::sync::CancellationToken;
 use tracing::{info, warn};
 

@@ -4,7 +4,7 @@ pub mod batch_collector;
 pub mod cache;
 pub mod openai;
 
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -54,10 +54,10 @@ pub struct ChatOpts {
 /// # Examples
 ///
 /// ```no_run
-/// use agentic_note_agent::llm::{ChatOpts, Message, ProviderRegistry};
+/// use zenon_agent::llm::{ChatOpts, Message, ProviderRegistry};
 /// use std::sync::Arc;
 ///
-/// # fn main() -> agentic_note_core::Result<()> {
+/// # fn main() -> zenon_core::Result<()> {
 /// let mut registry = ProviderRegistry::new("openai");
 /// // registry.register(Arc::new(OpenAiProvider::new_openai("key", "gpt-4o")));
 /// let provider = registry.active()?;

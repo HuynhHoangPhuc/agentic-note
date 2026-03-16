@@ -2,7 +2,7 @@
 ///
 /// All iroh-specific code is isolated here. If the iroh API changes,
 /// only this file needs updating.
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use async_trait::async_trait;
 use iroh::{
     endpoint::RecvStream, endpoint::SendStream, Endpoint, EndpointAddr, PublicKey, SecretKey,
@@ -11,7 +11,7 @@ use iroh::{
 use crate::transport::{SyncConnection, SyncMessage, SyncTransport};
 
 /// ALPN identifier for our sync protocol.
-pub const SYNC_ALPN: &[u8] = b"/agentic-note/sync/1";
+pub const SYNC_ALPN: &[u8] = b"/zenon/sync/1";
 
 /// iroh-based transport. Wraps an `Endpoint` which manages QUIC connections.
 pub struct IrohTransport {

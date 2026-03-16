@@ -1,4 +1,4 @@
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use sha2::{Digest, Sha256};
 use std::io::Write;
@@ -13,7 +13,7 @@ const TOKENIZER_URL: &str =
 pub fn default_cache_dir() -> PathBuf {
     dirs::cache_dir()
         .unwrap_or_else(|| PathBuf::from(".cache"))
-        .join("agentic-note")
+        .join("zenon")
         .join("models")
 }
 

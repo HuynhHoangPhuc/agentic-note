@@ -1,4 +1,4 @@
-use agentic_note_core::error::Result;
+use zenon_core::error::Result;
 use std::path::{Path, PathBuf};
 
 use super::manifest::PluginManifest;

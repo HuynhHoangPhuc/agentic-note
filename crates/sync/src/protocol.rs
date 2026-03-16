@@ -4,9 +4,9 @@
 /// then delegates to merge_driver for the actual merge.
 use std::path::Path;
 
-use agentic_note_cas::{restore, Cas, Snapshot};
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::ConflictPolicy;
+use zenon_cas::{restore, Cas, Snapshot};
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::ConflictPolicy;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
@@ -388,7 +388,7 @@ fn find_common_ancestor(cas: &Cas, _local_id: &str, remote_id: &str) -> Result<S
     }
     // No common ancestor — store an empty tree and use its ID.
     // merge will treat all files as new additions on both sides.
-    let empty_tree = agentic_note_cas::tree::Tree { entries: vec![] };
+    let empty_tree = zenon_cas::tree::Tree { entries: vec![] };
     let json = serde_json::to_vec(&empty_tree)
         .map_err(|e| AgenticError::Sync(format!("serialize empty tree: {e}")))?;
     let empty_id = cas
@@ -408,7 +408,7 @@ fn list_snapshot_blobs(cas: &Cas, snapshot_id: &str) -> Result<Vec<String>> {
 }
 
 fn collect_tree_blobs(cas: &Cas, tree_id: &str, blob_ids: &mut Vec<String>) -> Result<()> {
-    use agentic_note_cas::tree::{EntryType, Tree};
+    use zenon_cas::tree::{EntryType, Tree};
 
     if !blob_ids.iter().any(|id| id == tree_id) {
         blob_ids.push(tree_id.to_string());
@@ -450,7 +450,7 @@ fn maybe_restore_merged_vault(
 }
 
 fn synthetic_snapshot_id(root_tree_id: &str) -> String {
-    agentic_note_cas::hash::hash_bytes(format!("sync-merged-{root_tree_id}").as_bytes())
+    zenon_cas::hash::hash_bytes(format!("sync-merged-{root_tree_id}").as_bytes())
 }
 
 fn persist_snapshot_reference(cas: &Cas, snapshot_id: &str, root_tree_id: &str) -> Result<()> {
@@ -543,7 +543,7 @@ mod tests {
     async fn initiator_sends_sync_request_first() -> Result<()> {
         let dir = tempfile::TempDir::new().map_err(AgenticError::Io)?;
         let vault = dir.path();
-        std::fs::create_dir_all(vault.join(".agentic"))?;
+        std::fs::create_dir_all(vault.join(".zenon"))?;
         let cas = Cas::open(vault)?;
 
         // Create a real local snapshot first

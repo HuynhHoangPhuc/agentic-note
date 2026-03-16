@@ -1,11 +1,11 @@
-use agentic_note_agent::agents::{Distiller, ParaClassifier};
-use agentic_note_agent::engine::StageContext;
-use agentic_note_agent::llm::{anthropic::AnthropicProvider, openai::OpenAiProvider};
-use agentic_note_agent::AgentHandler;
-use agentic_note_core::Result;
-use agentic_note_core::types::ParaCategory;
-use agentic_note_test_utils::{MockLlmServer, TempVault};
-use agentic_note_vault::Note;
+use zenon_agent::agents::{Distiller, ParaClassifier};
+use zenon_agent::engine::StageContext;
+use zenon_agent::llm::{anthropic::AnthropicProvider, openai::OpenAiProvider};
+use zenon_agent::AgentHandler;
+use zenon_core::Result;
+use zenon_core::types::ParaCategory;
+use zenon_test_utils::{MockLlmServer, TempVault};
+use zenon_vault::Note;
 use std::sync::Arc;
 
 const OPENAI_CLASSIFICATION_RESPONSE: &str = r#"{

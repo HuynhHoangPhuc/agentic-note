@@ -1,7 +1,7 @@
 /// CLI commands for managing the multi-vault registry.
 ///
 /// Subcommands: register, unregister, list.
-use agentic_note_sync::VaultRegistry;
+use zenon_sync::VaultRegistry;
 use clap::Subcommand;
 use std::path::PathBuf;
 

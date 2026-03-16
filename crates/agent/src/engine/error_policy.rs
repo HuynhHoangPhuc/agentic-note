@@ -1,4 +1,4 @@
-use agentic_note_core::types::ErrorPolicy;
+use zenon_core::types::ErrorPolicy;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -156,8 +156,8 @@ async fn try_fallback(
 mod tests {
     use super::*;
     use crate::engine::context::StageContext;
-    use agentic_note_core::error::{AgenticError, Result as CoreResult};
-    use agentic_note_core::types::{FrontMatter, NoteId, NoteStatus, ParaCategory};
+    use zenon_core::error::{AgenticError, Result as CoreResult};
+    use zenon_core::types::{FrontMatter, NoteId, NoteStatus, ParaCategory};
     use async_trait::async_trait;
     use chrono::Utc;
     use std::path::PathBuf;

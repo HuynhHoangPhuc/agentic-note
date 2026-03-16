@@ -1,5 +1,5 @@
-use agentic_note_core::error::Result;
-use agentic_note_vault::init::init_vault;
+use zenon_core::error::Result;
+use zenon_vault::init::init_vault;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 

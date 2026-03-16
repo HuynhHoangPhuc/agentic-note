@@ -10,7 +10,7 @@ env:
 
 jobs:
   live-tests:
-    if: github.event_name != 'schedule' || github.repository == 'phuc/agentic-note'
+    if: github.event_name != 'schedule' || github.repository == 'phuc/zenon'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -26,6 +26,6 @@ jobs:
           test -n "$OPENAI_API_KEY"
           test -n "$ANTHROPIC_API_KEY"
       - name: Compile live-test suite
-        run: cargo test -p agentic-note-integration-tests --features live-tests --no-run
+        run: cargo test -p zenon-integration-tests --features live-tests --no-run
       - name: Run live LLM integration tests
-        run: cargo test -p agentic-note-integration-tests --features live-tests --test llm_agent_integration -- --nocapture
+        run: cargo test -p zenon-integration-tests --features live-tests --test llm_agent_integration -- --nocapture

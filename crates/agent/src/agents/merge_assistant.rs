@@ -9,7 +9,7 @@ use tracing::{debug, warn};
 
 use crate::engine::{AgentHandler, StageContext};
 use crate::llm::{ChatOpts, LlmProvider, Message};
-use agentic_note_core::Result;
+use zenon_core::Result;
 use std::sync::Arc;
 
 /// Agent that resolves merge conflicts using LLM.

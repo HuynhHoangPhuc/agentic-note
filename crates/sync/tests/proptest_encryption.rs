@@ -1,4 +1,4 @@
-use agentic_note_sync::encryption::{decrypt_envelope, encrypt_envelope, EnvelopeVersion};
+use zenon_sync::encryption::{decrypt_envelope, encrypt_envelope, EnvelopeVersion};
 use proptest::prelude::*;
 
 proptest! {

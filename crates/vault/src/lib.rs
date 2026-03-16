@@ -9,9 +9,9 @@ pub mod markdown;
 pub mod note;
 pub mod para;
 
-use agentic_note_core::config::AppConfig;
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::{NoteId, NoteStatus, ParaCategory};
+use zenon_core::config::AppConfig;
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::{NoteId, NoteStatus, ParaCategory};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};

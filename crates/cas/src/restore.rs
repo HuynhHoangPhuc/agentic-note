@@ -2,7 +2,7 @@ use crate::cas::Cas;
 use crate::hash::ObjectId;
 use crate::snapshot::Snapshot;
 use crate::tree::{EntryType, Tree};
-use agentic_note_core::Result;
+use zenon_core::Result;
 use std::path::Path;
 use tracing::info;
 
@@ -32,13 +32,13 @@ fn restore_tree(cas: &Cas, tree_id: &ObjectId, dest_dir: &Path) -> Result<()> {
     let expected_names: std::collections::HashSet<&str> =
         tree.entries.iter().map(|e| e.name.as_str()).collect();
 
-    // Remove entries in dest_dir not present in the tree (skip .agentic)
+    // Remove entries in dest_dir not present in the tree (skip .zenon)
     if dest_dir.exists() {
         for entry in std::fs::read_dir(dest_dir)? {
             let entry = entry?;
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
-            if name_str == ".agentic" {
+            if name_str == ".zenon" {
                 continue;
             }
             if !expected_names.contains(name_str.as_ref()) {

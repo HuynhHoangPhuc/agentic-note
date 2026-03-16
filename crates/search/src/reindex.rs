@@ -1,5 +1,5 @@
-use agentic_note_core::error::Result;
-use agentic_note_vault::{markdown, Note};
+use zenon_core::error::Result;
+use zenon_vault::{markdown, Note};
 use std::path::Path;
 use tracing::info;
 use walkdir::WalkDir;
@@ -22,10 +22,10 @@ pub fn reindex_vault(vault_path: &Path, fts: &FtsIndex, graph: &Graph<'_>) -> Re
         if path.extension().and_then(|e| e.to_str()) != Some("md") {
             continue;
         }
-        // Skip .agentic directory
+        // Skip .zenon directory
         if path
             .to_str()
-            .map(|s| s.contains(".agentic"))
+            .map(|s| s.contains(".zenon"))
             .unwrap_or(false)
         {
             continue;
@@ -58,7 +58,7 @@ pub fn reindex_vault(vault_path: &Path, fts: &FtsIndex, graph: &Graph<'_>) -> Re
 
     writer
         .commit()
-        .map_err(|e| agentic_note_core::error::AgenticError::Search(format!("commit: {e}")))?;
+        .map_err(|e| zenon_core::error::AgenticError::Search(format!("commit: {e}")))?;
 
     info!("reindex complete: {count} notes");
     Ok(count)

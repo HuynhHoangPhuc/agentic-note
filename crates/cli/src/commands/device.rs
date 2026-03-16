@@ -1,5 +1,5 @@
 /// Device management CLI commands: init, show, pair.
-use agentic_note_sync::{DeviceIdentity, DeviceRegistry};
+use zenon_sync::{DeviceIdentity, DeviceRegistry};
 use clap::Subcommand;
 use std::path::Path;
 
@@ -29,7 +29,7 @@ pub enum DeviceCmd {
 }
 
 pub fn run(cmd: DeviceCmd, vault_path: &Path, fmt: OutputFormat) -> anyhow::Result<()> {
-    let agentic_dir = vault_path.join(".agentic");
+    let agentic_dir = vault_path.join(".zenon");
     std::fs::create_dir_all(&agentic_dir)?;
 
     match cmd {

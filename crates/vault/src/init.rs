@@ -1,4 +1,4 @@
-use agentic_note_core::error::Result;
+use zenon_core::error::Result;
 use std::path::Path;
 use tracing::info;
 
@@ -19,7 +19,7 @@ default_trust = "review"
 max_concurrent_pipelines = 1
 "#;
 
-/// Initialize a vault at the given path. Creates PARA folders, .agentic/ dir,
+/// Initialize a vault at the given path. Creates PARA folders, .zenon/ dir,
 /// and default config.toml. Idempotent — skips existing dirs/files.
 pub fn init_vault(path: &Path) -> Result<()> {
     // Create PARA folders
@@ -31,8 +31,8 @@ pub fn init_vault(path: &Path) -> Result<()> {
         }
     }
 
-    // Create .agentic/ system directory
-    let agentic_dir = path.join(".agentic");
+    // Create .zenon/ system directory
+    let agentic_dir = path.join(".zenon");
     if !agentic_dir.exists() {
         std::fs::create_dir_all(&agentic_dir)?;
         info!("created {}", agentic_dir.display());
@@ -51,7 +51,7 @@ pub fn init_vault(path: &Path) -> Result<()> {
         info!("created {}", config_path.display());
     }
 
-    // Create .agentic/sessions dir for agent session logs
+    // Create .zenon/sessions dir for agent session logs
     let sessions_dir = agentic_dir.join("sessions");
     if !sessions_dir.exists() {
         std::fs::create_dir_all(&sessions_dir)?;

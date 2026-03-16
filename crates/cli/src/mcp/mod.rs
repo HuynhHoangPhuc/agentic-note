@@ -92,7 +92,7 @@ impl McpServer {
             serde_json::json!({
                 "protocolVersion": "2024-11-05",
                 "capabilities": { "tools": {} },
-                "serverInfo": { "name": "agentic-note", "version": "0.2.0" }
+                "serverInfo": { "name": "zenon", "version": "0.2.0" }
             }),
         )
     }

@@ -2,8 +2,8 @@ use crate::blob::BlobStore;
 use crate::conflict_policy::{resolve_conflict, ConflictResolution};
 use crate::hash::ObjectId;
 use crate::tree::{EntryType, Tree};
-use agentic_note_core::types::ConflictPolicy;
-use agentic_note_core::Result;
+use zenon_core::types::ConflictPolicy;
+use zenon_core::Result;
 use std::collections::HashMap;
 
 /// Information about a file that could not be auto-merged.
@@ -49,10 +49,10 @@ pub struct MergeResult {
 /// # Examples
 ///
 /// ```no_run
-/// use agentic_note_cas::{Cas, Snapshot, three_way_merge};
-/// use agentic_note_core::types::ConflictPolicy;
+/// use zenon_cas::{Cas, Snapshot, three_way_merge};
+/// use zenon_core::types::ConflictPolicy;
 /// # use std::path::Path;
-/// # fn main() -> agentic_note_core::Result<()> {
+/// # fn main() -> zenon_core::Result<()> {
 /// let cas = Cas::open(Path::new("/path/to/vault"))?;
 /// let snap = Snapshot::create(Path::new("/path/to/vault"), &cas, None)?;
 /// let _merge = three_way_merge(
@@ -318,7 +318,7 @@ fn merge_tree_object(
         entries: merged_entries,
     };
     let json = serde_json::to_vec(&merged_tree)
-        .map_err(|e| agentic_note_core::AgenticError::Parse(e.to_string()))?;
+        .map_err(|e| zenon_core::AgenticError::Parse(e.to_string()))?;
     Ok(Some(store.store(&json)?))
 }
 
@@ -442,7 +442,7 @@ fn ancestor_tree_id(
 
 fn empty_tree_id(store: &BlobStore) -> Result<ObjectId> {
     let json = serde_json::to_vec(&Tree { entries: vec![] })
-        .map_err(|e| agentic_note_core::AgenticError::Parse(e.to_string()))?;
+        .map_err(|e| zenon_core::AgenticError::Parse(e.to_string()))?;
     store.store(&json)
 }
 

@@ -1,5 +1,5 @@
-use agentic_note_core::types::{NoteId, NoteStatus, ParaCategory};
-use agentic_note_vault::{Note, NoteFilter, Vault};
+use zenon_core::types::{NoteId, NoteStatus, ParaCategory};
+use zenon_vault::{Note, NoteFilter, Vault};
 use clap::Subcommand;
 use std::path::PathBuf;
 use std::str::FromStr;

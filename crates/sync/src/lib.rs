@@ -27,9 +27,9 @@ pub use vault_registry::VaultRegistry;
 
 use std::path::{Path, PathBuf};
 
-use agentic_note_cas::Cas;
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::ConflictPolicy;
+use zenon_cas::Cas;
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::ConflictPolicy;
 
 /// Top-level facade combining identity, device registry, transport, and CAS.
 ///
@@ -46,13 +46,13 @@ pub struct SyncEngine {
 impl SyncEngine {
     /// Create a SyncEngine backed by the iroh transport.
     ///
-    /// Loads (or generates) the device identity from `vault_path/.agentic/identity.key`,
-    /// loads the device registry from `vault_path/.agentic/devices.json`,
-    /// opens the CAS at `vault_path/.agentic/cas/`, and binds an iroh endpoint.
+    /// Loads (or generates) the device identity from `vault_path/.zenon/identity.key`,
+    /// loads the device registry from `vault_path/.zenon/devices.json`,
+    /// opens the CAS at `vault_path/.zenon/cas/`, and binds an iroh endpoint.
     pub async fn new_with_iroh(vault_path: &Path) -> Result<Self> {
-        let agentic_dir = vault_path.join(".agentic");
+        let agentic_dir = vault_path.join(".zenon");
         std::fs::create_dir_all(&agentic_dir)
-            .map_err(|e| AgenticError::Sync(format!("create .agentic dir: {e}")))?;
+            .map_err(|e| AgenticError::Sync(format!("create .zenon dir: {e}")))?;
 
         let identity = DeviceIdentity::init_or_load(&agentic_dir)?;
         let registry_path = agentic_dir.join("devices.json");
@@ -150,8 +150,8 @@ pub async fn sync_all_vaults(registry: &VaultRegistry) -> Result<Vec<(String, St
 }
 
 /// Internal helper: sync one vault entry, returning a human-readable status string.
-async fn sync_single_vault_entry(entry: &agentic_note_core::config::VaultEntry) -> String {
-    use agentic_note_core::types::ConflictPolicy;
+async fn sync_single_vault_entry(entry: &zenon_core::config::VaultEntry) -> String {
+    use zenon_core::types::ConflictPolicy;
 
     if entry.default_peers.is_empty() {
         return "skipped: no default peers configured".into();

@@ -1,5 +1,5 @@
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::FrontMatter;
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::FrontMatter;
 
 const DELIMITER: &str = "---";
 
@@ -44,7 +44,7 @@ pub fn serialize(fm: &FrontMatter, body: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use agentic_note_core::types::{NoteId, NoteStatus, ParaCategory};
+    use zenon_core::types::{NoteId, NoteStatus, ParaCategory};
     use chrono::Utc;
 
     #[test]

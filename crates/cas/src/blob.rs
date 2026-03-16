@@ -1,5 +1,5 @@
 use crate::hash::{hash_bytes, ObjectId};
-use agentic_note_core::{AgenticError, Result};
+use zenon_core::{AgenticError, Result};
 use std::path::PathBuf;
 use tracing::debug;
 

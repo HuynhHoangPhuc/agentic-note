@@ -1,9 +1,9 @@
-use agentic_note_agent::engine::pipeline::StageConfig;
-use agentic_note_agent::engine::{
+use zenon_agent::engine::pipeline::StageConfig;
+use zenon_agent::engine::{
     AgentHandler, PipelineConfig, StageContext, StageExecutor, TriggerConfig, TriggerType,
 };
-use agentic_note_core::types::ErrorPolicy;
-use agentic_note_test_utils::TempVault;
+use zenon_core::types::ErrorPolicy;
+use zenon_test_utils::TempVault;
 use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;
@@ -20,18 +20,18 @@ impl AgentHandler for EchoAgent {
         &self,
         _ctx: &mut StageContext,
         _config: &toml::Value,
-    ) -> agentic_note_core::Result<Value> {
+    ) -> zenon_core::Result<Value> {
         Ok(serde_json::json!({"summary": "ok"}))
     }
 }
 
 #[tokio::test]
-async fn pipeline_execution_runs_dag() -> agentic_note_core::Result<()> {
+async fn pipeline_execution_runs_dag() -> zenon_core::Result<()> {
     let vault = TempVault::new()?;
-    let note = agentic_note_vault::Note::create(
+    let note = zenon_vault::Note::create(
         vault.path(),
         "Pipeline",
-        agentic_note_core::types::ParaCategory::Inbox,
+        zenon_core::types::ParaCategory::Inbox,
         "hello",
         vec![],
     )?;

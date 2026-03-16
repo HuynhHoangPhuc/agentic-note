@@ -1,4 +1,4 @@
-use agentic_note_vault::{Note, NoteSummary};
+use zenon_vault::{Note, NoteSummary};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Copy, PartialEq)]

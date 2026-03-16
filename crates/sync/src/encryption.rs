@@ -2,7 +2,7 @@
 ///
 /// Known limitation: static X25519 DH provides no forward secrecy. Each device
 /// derives a long-lived X25519 secret from its Ed25519 signing key.
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use chacha20poly1305::{
     aead::{Aead, KeyInit},
     ChaCha20Poly1305,
@@ -58,7 +58,7 @@ pub fn derive_shared_secret(my_secret: &StaticSecret, peer_public: &PublicKey) -
     let dh_output = my_secret.diffie_hellman(peer_public);
     let hk = Hkdf::<Sha256>::new(None, dh_output.as_bytes());
     let mut okm = [0u8; 32];
-    if hk.expand(b"agentic-note-sync-v1", &mut okm).is_err() {
+    if hk.expand(b"zenon-sync-v1", &mut okm).is_err() {
         return [0u8; 32];
     }
     okm

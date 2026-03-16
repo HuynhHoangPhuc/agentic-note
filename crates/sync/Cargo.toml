@@ -1,5 +1,5 @@
 [package]
-name = "agentic-note-sync"
+name = "zenon-sync"
 version = "0.5.0"
 edition = "2021"
 
@@ -8,8 +8,8 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-agentic-note-core = { workspace = true }
-agentic-note-cas = { workspace = true }
+zenon-core = { workspace = true }
+zenon-cas = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -36,5 +36,5 @@ rand_os = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt"] }
-agentic-note-test-utils = { path = "../test-utils" }
+zenon-test-utils = { path = "../test-utils" }
 proptest = { workspace = true }

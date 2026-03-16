@@ -1,5 +1,5 @@
-use agentic_note_core::error::Result;
-use agentic_note_core::types::ParaCategory;
+use zenon_core::error::Result;
+use zenon_core::types::ParaCategory;
 use std::path::{Path, PathBuf};
 
 /// All PARA category folders in creation order.
@@ -40,9 +40,9 @@ pub fn validate_structure(vault: &Path) -> Result<Vec<String>> {
             issues.push(format!("missing folder: {}", cat));
         }
     }
-    let agentic_dir = vault.join(".agentic");
+    let agentic_dir = vault.join(".zenon");
     if !agentic_dir.exists() {
-        issues.push("missing .agentic/ directory".into());
+        issues.push("missing .zenon/ directory".into());
     }
     Ok(issues)
 }

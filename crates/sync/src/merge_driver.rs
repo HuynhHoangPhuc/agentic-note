@@ -4,10 +4,10 @@
 /// Delegates all conflict resolution to ConflictPolicy from Phase 5.
 use std::path::Path;
 
-use agentic_note_cas::merge::three_way_merge;
-use agentic_note_cas::{Cas, Snapshot};
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::ConflictPolicy;
+use zenon_cas::merge::three_way_merge;
+use zenon_cas::{Cas, Snapshot};
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::ConflictPolicy;
 use tracing::{info, warn};
 
 /// Summary of a completed merge operation.
@@ -83,7 +83,7 @@ pub fn merge_after_sync(
     })
 }
 
-/// Write conflict marker files to `.agentic/conflicts/` for manual conflicts.
+/// Write conflict marker files to `.zenon/conflicts/` for manual conflicts.
 ///
 /// Creates one file per conflict: `{conflict_dir}/{path}.conflict`
 /// containing both versions with markers.
@@ -94,7 +94,7 @@ pub fn write_conflict_files(
     local_id: &str,
     remote_id: &str,
 ) -> Result<()> {
-    let conflict_dir = vault_path.join(".agentic").join("conflicts");
+    let conflict_dir = vault_path.join(".zenon").join("conflicts");
     if conflict_dir.exists() {
         for entry in std::fs::read_dir(&conflict_dir)
             .map_err(|e| AgenticError::Sync(format!("read conflicts dir: {e}")))? {
@@ -160,7 +160,7 @@ fn resolve_to_tree(cas: &Cas, id: &str) -> Result<String> {
 /// Load the blob bytes for a given file path from a tree ID.
 /// Returns None if the path is not found in the tree.
 fn load_blob_by_path(cas: &Cas, tree_id: &str, file_path: &str) -> Option<Vec<u8>> {
-    use agentic_note_cas::tree::{EntryType, Tree};
+    use zenon_cas::tree::{EntryType, Tree};
 
     let parts: Vec<&str> = file_path.split('/').collect();
     let mut current_tree_id = tree_id.to_string();
@@ -204,7 +204,7 @@ mod tests {
         let cas = temp_cas(vault);
 
         // Create a snapshot of the empty vault
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, Some("test".into()))
+        let snap = zenon_cas::Snapshot::create(vault, &cas, Some("test".into()))
             .expect("create snapshot");
 
         let outcome = merge_after_sync(
@@ -227,7 +227,7 @@ mod tests {
         std::fs::write(vault.join("note.md"), b"# Hello").expect("write note");
         let cas = temp_cas(vault);
 
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
+        let snap = zenon_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
 
         let outcome = merge_after_sync(&cas, &snap.id, &snap.id, &snap.id, &ConflictPolicy::Manual)
             .expect("merge after sync");
@@ -241,13 +241,13 @@ mod tests {
         let vault = dir.path();
         let cas = temp_cas(vault);
 
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
+        let snap = zenon_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
         let conflict_paths = vec!["some/note.md".to_string()];
 
         write_conflict_files(&cas, vault, &conflict_paths, &snap.id, &snap.id)
             .expect("write conflict files");
 
-        let conflicts_dir = vault.join(".agentic").join("conflicts");
+        let conflicts_dir = vault.join(".zenon").join("conflicts");
         assert!(conflicts_dir.exists());
     }
 
@@ -256,11 +256,11 @@ mod tests {
         let dir = TempDir::new().expect("temp dir");
         let vault = dir.path();
         let cas = temp_cas(vault);
-        let conflicts_dir = vault.join(".agentic").join("conflicts");
+        let conflicts_dir = vault.join(".zenon").join("conflicts");
         std::fs::create_dir_all(&conflicts_dir).expect("create conflicts dir");
         std::fs::write(conflicts_dir.join("stale.conflict"), b"old").expect("write stale");
 
-        let snap = agentic_note_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
+        let snap = zenon_cas::Snapshot::create(vault, &cas, None).expect("create snapshot");
         write_conflict_files(&cas, vault, &[], &snap.id, &snap.id).expect("clear conflict files");
 
         let entries = std::fs::read_dir(&conflicts_dir)

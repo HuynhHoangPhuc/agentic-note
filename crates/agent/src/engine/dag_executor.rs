@@ -1,5 +1,5 @@
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::ErrorPolicy;
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::ErrorPolicy;
 use petgraph::algo::toposort;
 use petgraph::graph::{DiGraph, NodeIndex};
 use serde_json::Value;
@@ -322,7 +322,7 @@ mod tests {
     use crate::engine::context::StageContext;
     use crate::engine::pipeline::StageConfig;
     use crate::engine::trigger::{TriggerConfig, TriggerType};
-    use agentic_note_core::types::{FrontMatter, NoteId, NoteStatus, ParaCategory};
+    use zenon_core::types::{FrontMatter, NoteId, NoteStatus, ParaCategory};
     use async_trait::async_trait;
     use chrono::Utc;
     use std::path::PathBuf;

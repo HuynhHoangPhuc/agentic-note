@@ -1,8 +1,8 @@
-# Agentic-Note: Project Overview & Product Development Requirements
+# zenon: Project Overview & Product Development Requirements
 
 ## Overview
 
-**agentic-note** is a local-first, agentic note-taking application written in Rust. It combines personal knowledge management (PKM) with AI-powered agents to organize, link, and enhance notes using PARA/Zettelkasten methods. The system is built as a CLI tool with a built-in Model Context Protocol (MCP) server for AI assistant integration.
+**zenon** is a local-first, agentic note-taking application written in Rust. It combines personal knowledge management (PKM) with AI-powered agents to organize, link, and enhance notes using PARA/Zettelkasten methods. The system is built as a CLI tool with a built-in Model Context Protocol (MCP) server for AI assistant integration.
 
 **Core Value Proposition:**
 - Organize notes with PARA (Projects/Areas/Resources/Archives) + Zettelkasten atomic notes
@@ -22,7 +22,7 @@
 #### 1. Vault Management
 - **FR-1.1**: Initialize a vault with PARA structure (projects, areas, resources, archives, inbox)
 - **FR-1.2**: Support Zettelkasten folder for atomic notes
-- **FR-1.3**: Load and validate vault configuration from `.agentic/config.toml`
+- **FR-1.3**: Load and validate vault configuration from `.zenon/config.toml`
 - **FR-1.4**: Display vault status (total notes, indexed items, pipeline state)
 
 #### 2. Note CRUD Operations
@@ -106,7 +106,7 @@
 #### Security
 - **NFR-2.1**: API keys stored with 0600 file permissions
 - **NFR-2.2**: No credentials logged or printed to stdout
-- **NFR-2.3**: Sensitive data isolated to `.agentic/` directory
+- **NFR-2.3**: Sensitive data isolated to `.zenon/` directory
 - **NFR-2.4**: MCP server runs in isolation without network access
 
 #### Scalability
@@ -161,7 +161,7 @@
 
 8. **Review Queue in SQLite** — Persisted, queryable, no external service.
 
-9. **Config in .agentic/config.toml** — Follows Unix conventions. API keys with 0600 permissions.
+9. **Config in .zenon/config.toml** — Follows Unix conventions. API keys with 0600 permissions.
 
 10. **MCP Server via stdio** — Simplest integration pattern for AI assistants. No port management.
 

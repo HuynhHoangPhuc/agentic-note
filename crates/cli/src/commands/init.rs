@@ -1,4 +1,4 @@
-use agentic_note_vault::init_vault;
+use zenon_vault::init_vault;
 use std::path::PathBuf;
 
 use crate::output::{print_json, OutputFormat};

@@ -1,5 +1,5 @@
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::ErrorPolicy;
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::ErrorPolicy;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 

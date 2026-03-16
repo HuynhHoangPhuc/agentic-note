@@ -2,7 +2,7 @@
 ///
 /// Cache key is SHA-256 of (model + messages_json + opts_json), so identical
 /// requests across sessions are de-duplicated automatically.
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use rusqlite::{params, Connection};
 use sha2::{Digest, Sha256};
 use std::path::Path;

@@ -15,12 +15,12 @@ use output::OutputFormat;
 
 #[derive(Parser)]
 #[command(
-    name = "agentic-note",
+    name = "zenon",
     version,
     about = "Local-first agentic note-taking"
 )]
 struct Cli {
-    /// Path to vault (default: AGENTIC_NOTE_VAULT env or cwd)
+    /// Path to vault (default: ZENON_VAULT env or cwd)
     #[arg(long, global = true)]
     vault: Option<PathBuf>,
 
@@ -38,7 +38,7 @@ async fn main() {
 
     // Init tracing to stderr (stdout reserved for JSON-RPC / user output)
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_env("AGENTIC_LOG"))
+        .with_env_filter(EnvFilter::from_env("ZENON_LOG"))
         .with_writer(std::io::stderr)
         .init();
 
@@ -48,7 +48,7 @@ async fn main() {
         OutputFormat::Human
     };
 
-    let vault_path = match agentic_note_core::config::AppConfig::resolve_vault_path(cli.vault) {
+    let vault_path = match zenon_core::config::AppConfig::resolve_vault_path(cli.vault) {
         Ok(p) => p,
         Err(e) => {
             eprintln!("Error resolving vault path: {e}");

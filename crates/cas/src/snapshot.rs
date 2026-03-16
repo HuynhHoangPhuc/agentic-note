@@ -1,7 +1,7 @@
 use crate::cas::Cas;
 use crate::hash::ObjectId;
 use crate::tree::Tree;
-use agentic_note_core::{AgenticError, Result};
+use zenon_core::{AgenticError, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -18,7 +18,7 @@ pub struct Snapshot {
 impl Snapshot {
     /// Build a tree from the vault directory, persist metadata, and return the snapshot.
     pub fn create(vault: &Path, cas: &Cas, message: Option<String>) -> Result<Snapshot> {
-        let exclude = [".agentic"];
+        let exclude = [".zenon"];
         let (_tree, root_tree) = Tree::from_dir(vault, &cas.blob_store, &exclude)?;
 
         let timestamp = Utc::now();

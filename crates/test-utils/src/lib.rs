@@ -1,4 +1,4 @@
-//! Shared test helpers for agentic-note crates.
+//! Shared test helpers for zenon crates.
 
 pub mod fixtures;
 pub mod mock_llm_server;

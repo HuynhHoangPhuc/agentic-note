@@ -3,7 +3,7 @@
 //! Provides simple compress/decompress functions wrapping the `zstd` crate.
 //! Used during sync to reduce bandwidth for blob transfers.
 
-use agentic_note_core::{AgenticError, Result};
+use zenon_core::{AgenticError, Result};
 use std::io::Cursor;
 
 /// Compress data using zstd at the given compression level (1-22).

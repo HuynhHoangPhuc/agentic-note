@@ -1,14 +1,14 @@
-use agentic_note_search::SearchEngine;
-use agentic_note_test_utils::TempVault;
-use agentic_note_vault::{Note, NoteFilter, Vault};
+use zenon_search::SearchEngine;
+use zenon_test_utils::TempVault;
+use zenon_vault::{Note, NoteFilter, Vault};
 
 #[test]
-fn note_create_index_search_delete() -> agentic_note_core::Result<()> {
+fn note_create_index_search_delete() -> zenon_core::Result<()> {
     let vault = TempVault::new()?;
     let note = Note::create(
         vault.path(),
         "Lifecycle",
-        agentic_note_core::types::ParaCategory::Inbox,
+        zenon_core::types::ParaCategory::Inbox,
         "Hello world",
         vec!["tag".to_string()],
     )?;

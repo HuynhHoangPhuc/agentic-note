@@ -16,7 +16,7 @@ pub use pipeline::PipelineConfig;
 pub use scheduler::{PipelineScheduler, ScheduleInfo};
 pub use trigger::{FileEvent, FileEventType, TriggerConfig, TriggerType};
 
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use std::path::PathBuf;
 use std::sync::Arc;
 

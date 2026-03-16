@@ -1,5 +1,5 @@
-use agentic_note_core::error::{AgenticError, Result};
-use agentic_note_core::types::{FrontMatter, NoteId, NoteStatus, ParaCategory};
+use zenon_core::error::{AgenticError, Result};
+use zenon_core::types::{FrontMatter, NoteId, NoteStatus, ParaCategory};
 use chrono::Utc;
 use std::path::{Path, PathBuf};
 
@@ -26,10 +26,10 @@ impl Note {
     /// # Examples
     ///
     /// ```no_run
-    /// use agentic_note_core::types::ParaCategory;
-    /// use agentic_note_vault::Note;
+    /// use zenon_core::types::ParaCategory;
+    /// use zenon_vault::Note;
     /// # use std::path::Path;
-    /// # fn main() -> agentic_note_core::Result<()> {
+    /// # fn main() -> zenon_core::Result<()> {
     /// let note = Note::create(
     ///     Path::new("/path/to/vault"),
     ///     "My note",
@@ -47,7 +47,7 @@ impl Note {
         tags: Vec<String>,
     ) -> Result<Note> {
         metrics::counter!("note_operations_total", "operation" => "create").increment(1);
-        let id = agentic_note_core::next_id();
+        let id = zenon_core::next_id();
         let now = Utc::now();
         let fm = FrontMatter {
             id,

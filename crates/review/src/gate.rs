@@ -1,4 +1,4 @@
-use agentic_note_core::{config::TrustLevel, error::Result};
+use zenon_core::{config::TrustLevel, error::Result};
 use serde_json::Value;
 
 use crate::queue::ReviewQueue;

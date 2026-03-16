@@ -1,11 +1,11 @@
 use crate::output::OutputFormat;
-use agentic_note_agent::plugin::discover_plugins;
+use zenon_agent::plugin::discover_plugins;
 use anyhow::Result;
 use std::path::Path;
 
 /// List discovered plugins from the vault's plugins directory.
 pub fn list(vault_path: &Path, fmt: OutputFormat) -> Result<()> {
-    let plugins_dir = vault_path.join(".agentic").join("plugins");
+    let plugins_dir = vault_path.join(".zenon").join("plugins");
     let plugins = discover_plugins(&plugins_dir)?;
 
     if plugins.is_empty() {

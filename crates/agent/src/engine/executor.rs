@@ -1,5 +1,5 @@
-use agentic_note_core::error::Result;
-use agentic_note_core::types::ErrorPolicy;
+use zenon_core::error::Result;
+use zenon_core::types::ErrorPolicy;
 use async_trait::async_trait;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -160,8 +160,8 @@ mod tests {
     use crate::engine::context::StageContext;
     use crate::engine::pipeline::{PipelineConfig, StageConfig};
     use crate::engine::trigger::{TriggerConfig, TriggerType};
-    use agentic_note_core::error::AgenticError;
-    use agentic_note_core::types::{FrontMatter, NoteId, NoteStatus, ParaCategory};
+    use zenon_core::error::AgenticError;
+    use zenon_core::types::{FrontMatter, NoteId, NoteStatus, ParaCategory};
     use chrono::Utc;
     use std::path::PathBuf;
 

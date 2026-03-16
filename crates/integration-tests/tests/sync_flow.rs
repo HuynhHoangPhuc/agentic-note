@@ -1,10 +1,10 @@
-use agentic_note_cas::{Cas, Snapshot};
-use agentic_note_core::types::ConflictPolicy;
-use agentic_note_sync::merge_driver::merge_after_sync;
-use agentic_note_test_utils::TempVault;
+use zenon_cas::{Cas, Snapshot};
+use zenon_core::types::ConflictPolicy;
+use zenon_sync::merge_driver::merge_after_sync;
+use zenon_test_utils::TempVault;
 
 #[test]
-fn snapshot_diff_merge_restore_flow() -> agentic_note_core::Result<()> {
+fn snapshot_diff_merge_restore_flow() -> zenon_core::Result<()> {
     let vault = TempVault::with_note("inbox/note.md", "Hello")?;
     let cas = Cas::open(vault.path())?;
 

@@ -1,5 +1,5 @@
 [package]
-name = "agentic-note-agent"
+name = "zenon-agent"
 version = "0.5.0"
 edition = "2021"
 
@@ -8,10 +8,10 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-agentic-note-core = { workspace = true }
-agentic-note-vault = { workspace = true }
-agentic-note-search = { workspace = true }
-agentic-note-review = { workspace = true }
+zenon-core = { workspace = true }
+zenon-vault = { workspace = true }
+zenon-search = { workspace = true }
+zenon-review = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = "1"
@@ -41,4 +41,4 @@ optional = true
 tempfile = "3"
 tokio = { workspace = true, features = ["macros", "rt"] }
 chrono = { workspace = true }
-agentic-note-test-utils = { path = "../test-utils" }
+zenon-test-utils = { path = "../test-utils" }

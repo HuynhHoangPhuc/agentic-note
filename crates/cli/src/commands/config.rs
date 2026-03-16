@@ -1,4 +1,4 @@
-use agentic_note_core::config::AppConfig;
+use zenon_core::config::AppConfig;
 use std::path::Path;
 
 use crate::output::{print_json, OutputFormat};
@@ -31,7 +31,7 @@ pub fn show(vault_path: &Path, fmt: OutputFormat) -> anyhow::Result<()> {
             print_json(&json);
         }
         OutputFormat::Human => {
-            let config_path = vault_path.join(".agentic").join("config.toml");
+            let config_path = vault_path.join(".zenon").join("config.toml");
             let content = std::fs::read_to_string(&config_path)?;
             // Mask API keys in human-readable output
             let masked = regex::Regex::new(r#"(?m)(api_key\s*=\s*")([^"]{8,})(")"#)

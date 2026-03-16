@@ -1,8 +1,8 @@
 use crate::blob::BlobStore;
 use crate::hash::ObjectId;
 use crate::merge::ConflictInfo;
-use agentic_note_core::types::ConflictPolicy;
-use agentic_note_core::Result;
+use zenon_core::types::ConflictPolicy;
+use zenon_core::Result;
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -266,7 +266,7 @@ mod tests {
             ConflictResolution::Resolved { merged_blob_id, .. } => {
                 let merged_bytes = store.load(&merged_blob_id)?;
                 let merged_text = String::from_utf8(merged_bytes).map_err(|e| {
-                    agentic_note_core::AgenticError::Parse(format!("utf8 merged: {e}"))
+                    zenon_core::AgenticError::Parse(format!("utf8 merged: {e}"))
                 })?;
                 assert!(merged_text.contains("<<<< LOCAL"));
                 assert!(merged_text.contains("===="));

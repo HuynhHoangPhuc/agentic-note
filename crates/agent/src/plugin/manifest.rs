@@ -2,7 +2,7 @@
 //!
 //! Supports both subprocess and WASM runtimes.
 
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 

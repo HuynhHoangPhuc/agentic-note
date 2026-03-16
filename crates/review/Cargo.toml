@@ -1,5 +1,5 @@
 [package]
-name = "agentic-note-review"
+name = "zenon-review"
 version = "0.5.0"
 edition = "2021"
 
@@ -8,7 +8,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-agentic-note-core = { workspace = true }
+zenon-core = { workspace = true }
 rusqlite = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -18,4 +18,4 @@ ulid = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3"
-agentic-note-test-utils = { path = "../test-utils" }
+zenon-test-utils = { path = "../test-utils" }

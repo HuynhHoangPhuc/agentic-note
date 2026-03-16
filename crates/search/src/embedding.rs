@@ -1,4 +1,4 @@
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use ort::session::Session;
 use rusqlite::Connection;
 use std::path::Path;

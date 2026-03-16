@@ -1,4 +1,4 @@
-use agentic_note_core::error::{AgenticError, Result};
+use zenon_core::error::{AgenticError, Result};
 use serde::{Deserialize, Serialize};
 
 use super::{ChatOpts, Message};

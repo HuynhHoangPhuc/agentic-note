@@ -1,5 +1,5 @@
 [package]
-name = "agentic-note-cli"
+name = "zenon-cli"
 version = "0.5.0"
 edition = "2021"
 
@@ -8,15 +8,15 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [[bin]]
-name = "agentic-note"
+name = "zenon"
 path = "src/main.rs"
 
 [dependencies]
-agentic-note-core = { workspace = true }
-agentic-note-vault = { workspace = true }
-agentic-note-search = { workspace = true }
-agentic-note-agent = { workspace = true }
-agentic-note-sync = { workspace = true }
+zenon-core = { workspace = true }
+zenon-vault = { workspace = true }
+zenon-search = { workspace = true }
+zenon-agent = { workspace = true }
+zenon-sync = { workspace = true }
 clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -32,10 +32,10 @@ http-body-util = { workspace = true }
 hyper-util = { workspace = true }
 
 [features]
-embeddings = ["agentic-note-search/embeddings"]
+embeddings = ["zenon-search/embeddings"]
 
 [lints.rust]
 unexpected_cfgs = { level = "allow", check-cfg = ['cfg(feature, values("embeddings"))'] }
 
 [dev-dependencies]
-agentic-note-test-utils = { path = "../test-utils" }
+zenon-test-utils = { path = "../test-utils" }
